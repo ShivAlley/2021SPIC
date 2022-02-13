@@ -8,6 +8,10 @@
 
 void Main()
 {
+	Window::SetToggleFullscreenEnabled(true);
+	Window::SetFullscreen(true);
+	Scene::SetResizeMode(ResizeMode::Keep);
+	//TextureAsset::Register(U"sampleBack", U"Image/sampleBack.png");
 	App manager;
 	manager.add<Title>(GameState::Title);
 	manager.add<Game>(GameState::Game);
