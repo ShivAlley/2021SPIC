@@ -1,57 +1,11 @@
 ﻿#pragma once
 #include "common.h"
 
-
-
-struct Parameter
-{
-	Parameter() = default;
-	template <typename T>
-	Parameter(T x,T y,T accel,T jump)
-		:MAX_VELOCITY_X(x)
-		,MAX_VELOCITY_Y(y)
-		,ACCELERATION_X(accel)
-		,JUMP_POWER(jump)
-	{}
-	template <class T>
-	Parameter(T v1,T v2)
-		:MAX_VELOCITY_X(v1.x)
-		,MAX_VELOCITY_Y(v1.y)
-		,ACCELERATION_X(v2.x)
-		,JUMP_POWER(v2.y)
-	{}
-
-	double MAX_VELOCITY_X;
-	double MAX_VELOCITY_Y;
-	double ACCELERATION_X;
-	double JUMP_POWER;
-};
-
-class Player : private Parameter
+class Game : public App::Scene
 {
 public:
-	Player()
-		:m_param(
-			Vec2(1000,1000),
-			Vec2(500,-40))
-	{}
-	const P2Body& body()const { return m_body; }
-	P2Body& LVRbody() { return m_body; }
-	const Parameter& param() const{ return m_param; }
-	Parameter& LVRparam() { return m_param; }
-	const bool& isJumpRestriction()const { return m_isJumpRestriction; }
-	bool& LVRisJumpRestriction() { return m_isJumpRestriction; }
-private:
-	bool m_isJumpRestriction = false;
-	P2Body m_body;
-	Parameter m_param;
-};
 
 
-class Game : public App::Scene,
-	private Player
-{
-public:
 	Game(const InitData& init);
 
 	void update() override;
@@ -59,13 +13,12 @@ public:
 	void draw() const override;
 
 private:
-#ifdef _DEBUG
-	void PrintDebug();
-#endif // _DEBUG
+	void foo() {
+		Print << U"foo";
+	}
 	Visitor<void(void)> visitor;
 	P2World world{ gravity };
 	Array<P2Body> chips;
-	Array<P2Body> enemys;
 	Grid<int8> map =
 	{
 		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
@@ -84,26 +37,14 @@ private:
 		{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 	};
-	Grid<int8> enemy =
-	{
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-	};
 	Camera2D camera{ Vec2{ 0, 0 } };
-	
-	Player player;
-	
+
+	class Player
+	{
+	public:
+		P2Body body()const { return m_body; }
+		P2Body& LVbody() { return m_body; }
+	private:
+		P2Body m_body;
+	} player;
 };
