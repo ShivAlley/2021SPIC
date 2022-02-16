@@ -9,9 +9,11 @@
 void Main()
 {
 	Window::SetToggleFullscreenEnabled(true);
-	Window::SetFullscreen(true);
+	Window::SetFullscreen(true,0);
 	Scene::SetResizeMode(ResizeMode::Keep);
 	//TextureAsset::Register(U"sampleBack", U"Image/sampleBack.png");
+	TextureAsset::Register(U"dummy256", U"Image/256x256.png");
+	TextureAsset::Register(U"dummyPlayer", U"Image/player.png",TextureDesc::Mipped);
 	App manager;
 	manager.add<Title>(GameState::Title);
 	manager.add<Game>(GameState::Game);

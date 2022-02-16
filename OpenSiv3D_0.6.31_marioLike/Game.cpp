@@ -6,7 +6,7 @@ Game::Game(const InitData& init):IScene(init)
 {
 	//visitor.inspector[Accessor::first] = [&]() {return foo(); };
 	//std::visit(visitor, visitor.inspector.at(visitor.stateMachine.front()));
-	player.LVRbody() = world.createRect(P2Dynamic, Vec2(0, -100), RectF(Arg::center(CHIP_SIZE,CHIP_SIZE),CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0,1.0,0.2,0.0));
+	player.LVRbody() = world.createRect(P2Dynamic, Vec2(0, -100), RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0,1.0,0.2,0.0));
 	//player.LVRbody().addRect(RectF(30, 100));
 	player.LVRbody().setDamping(0.1);
 	player.LVRbody().setFixedRotation(true);
@@ -15,11 +15,11 @@ Game::Game(const InitData& init):IScene(init)
 	Size size = { map.width(), map.height() };//マップの大きさ｛ｘ、ｙ｝
 	for (auto p : step(size)) {
 		if (map[p.y][p.x] == 1)
-			chips << world.createRect(P2Static, Vec2{ p.x * 32 - 1280 / 2,p.y * 32 - 720 / 2 }, RectF(32, 32, 32, 32), P2Material());
+			chips << world.createRect(P2Static, Vec2{ p.x * 64 - 1280 / 2,p.y * 64 - 720 / 2 }, RectF(64, 64, 64, 64), P2Material());
 	}
 	for (auto p : step(Size(enemy.width(),enemy.height()))) {
 		if (enemy[p.y][p.x] == 1)
-			enemys << world.createRect(P2Dynamic, Vec2{ p.x * 32 - 1280 / 2,p.y * 32 - 720 / 2 }, RectF(32, 32, 32, 32), P2Material());
+			enemys << world.createRect(P2Dynamic, Vec2{ p.x * 64 - 1280 / 2,p.y * 64 - 720 / 2 }, RectF(64, 64, 64, 64), P2Material());
 	}
 	camera.setParameters(Camera2DParameters::NoControl());
 }
@@ -29,7 +29,7 @@ Game::Game(const InitData& init):IScene(init)
 
 void Game::update()
 {
-	//ClearPrint();
+	
 	for (accumulatorSec += Scene::DeltaTime(); stepSec <= accumulatorSec; accumulatorSec -= stepSec)
 	{
 		world.update(stepSec);
@@ -37,40 +37,60 @@ void Game::update()
 		PrintDebug();
 		for (auto& it : world.getCollisions())
 		{
+			//底辺が接触したとき
 			if (it.second.normal() == Vec2(0, 1)
 				and (KeySpace.pressed() or KeySpace.down())
+				and KeyA.pressed()
+				and not player.isJumpRestriction())
+			{
+				player.LVRbody().applyLinearImpulse(Vec2(-player.param().KICK_POWER_X , player.param().JUMP_POWER / 4));
+				player.LVRisJumpRestriction() = true;
+			}
+			if (it.second.normal() == Vec2(0, 1)
+				and (KeySpace.pressed() or KeySpace.down())
+				and KeyD.pressed()
+				and not player.isJumpRestriction())
+			{
+				player.LVRbody().applyLinearImpulse(Vec2(player.param().KICK_POWER_X, player.param().JUMP_POWER / 4));
+				player.LVRisJumpRestriction() = true;
+			}
+			if (it.second.normal() == Vec2(0, 1)
+				and (KeySpace.pressed() or KeySpace.down())
+				and not(KeyA.pressed() or KeyD.pressed())
 				and not player.isJumpRestriction())
 			{
 				player.LVRbody().applyLinearImpulse(Vec2(0, player.param().JUMP_POWER));
 				player.LVRisJumpRestriction() = true;
 			}
+			//右辺が接触したとき
 			if (it.second.normal() == Vec2(1, 0)
 				and (KeyD.pressed() or KeyRight.pressed()))
 			{
 				player.LVRbody().setVelocity(Vec2(0, 0));
 				if (KeySpace.down())
 				{
-					player.LVRbody().applyLinearImpulse(Vec2(-500, -100));
+					player.LVRbody().applyLinearImpulse(Vec2(-500, -500));
 				}
 			}
 			if (it.second.normal() == Vec2(1, 0)
 				and (KeyD.up() or KeyRight.up()))
 			{
-				player.LVRbody().applyLinearImpulse(Vec2(-1000, 0));
+				player.LVRbody().applyLinearImpulse(Vec2(-10, 0));
 			}
+			//左辺が接触したとき
 			if (it.second.normal() == Vec2(-1, 0)
 				and (KeyA.pressed() or KeyLeft.pressed()))
 			{
 				player.LVRbody().setVelocity(Vec2(0, 0));
 				if (KeySpace.down())
 				{
-					player.LVRbody().applyLinearImpulse(Vec2(500, -100));
+					player.LVRbody().applyLinearImpulse(Vec2(500, -500));
 				}
 			}
 			if (it.second.normal() == Vec2(-1, 0)
 				and (KeyA.up() or KeyLeft.up()))
 			{
-				player.LVRbody().applyLinearImpulse(Vec2(1000, 0));
+				player.LVRbody().applyLinearImpulse(Vec2(10, 0));
 			}
 		}
 		
@@ -82,18 +102,18 @@ void Game::update()
 
 	if (KeyA.pressed() or KeyLeft.pressed())
 	{
-		player.LVRbody().applyForce(Vec2(-player.param().ACCELERATION_X, 0));
+		player.LVRbody().applyForce(Vec2(-player.param().ACCELERATION_X * Scene::DeltaTime(), 0));
 	}
 	if (KeyD.pressed() or KeyRight.pressed())
 	{
-		player.LVRbody().applyForce(Vec2(player.param().ACCELERATION_X, 0));
+		player.LVRbody().applyForce(Vec2(player.param().ACCELERATION_X * Scene::DeltaTime(), 0));
 	}
 	double vel = Clamp(player.body().getVelocity().x, -player.param().MAX_VELOCITY_X, player.param().MAX_VELOCITY_X);
 	player.LVRbody().setVelocity(Vec2(vel, player.body().getVelocity().y));
 
 	camera.update();
-	camera.setCenter(player.body().getPos());
-	//camera.setScale(0.5);
+	camera.setCenter(Vec2(player.body().getPos().x, 200));
+	//camera.setScale(1);
 	
 	//PrintDebug();
 }
@@ -103,6 +123,9 @@ void Game::draw() const
 	//TextureAsset(U"sampleBack").scaled(1.5,1.5).draw();
 	const auto t = camera.createTransformer();
 	player.body().draw();
+	TextureAsset(U"dummyPlayer")
+		.scaled(0.5,0.5)
+		.draw(player.body().getPos());
 	for (const auto& chip : chips)
 	{
 		chip.draw(HSV{ chip.id() * 10.0 });
@@ -116,10 +139,13 @@ void Game::draw() const
 
 void Game::PrintDebug()
 {
+	ClearPrint();
 	for (auto& it : world.getCollisions())
 	{
 		Print << it.first.a;
 		Print << it.first.b;
 		Print << it.second.normal();
 	}
+	Print << player.body().getInertia();
+	Print << player.body().getVelocity();
 }
