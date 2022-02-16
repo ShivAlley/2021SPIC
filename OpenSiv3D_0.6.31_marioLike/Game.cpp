@@ -21,7 +21,7 @@ Game::Game(const InitData& init):IScene(init)
 		if (map[p.y][p.x] == 1)
 			chips << world.createRect(P2Static, Vec2{ p.x * 64 - 1280 / 2,p.y * 64 - 720 / 2 }, RectF(64, 64, 64, 64), P2Material());
 	}
-	for (auto p : step(Size(enemy.width(),enemy.height()))) {
+	/*for (auto p : step(Size(enemy.width(),enemy.height()))) {
 		if (enemy[p.y][p.x] == 1)
 			enemys << world.createRect(P2Dynamic, Vec2{ p.x * 64 - 1280 / 2,p.y * 64 - 720 / 2 }, RectF(64, 64, 64, 64), P2Material());
 	}
@@ -38,7 +38,7 @@ void Game::update()
 	{
 		world.update(stepSec);
 
-		PrintDebug();
+		/*PrintDebug();
 		for (auto& it : world.getCollisions())
 		{
 			//底辺が接触したとき
@@ -98,8 +98,9 @@ void Game::update()
 			}
 		}
 		
+		
 	}
-	if (KeySpace.up())
+	/*if (KeySpace.up())
 	{
 		player.LVRisJumpRestriction() = false;
 	}
@@ -113,7 +114,7 @@ void Game::update()
 		player.LVRbody().applyForce(Vec2(player.param().ACCELERATION_X * Scene::DeltaTime(), 0));
 	}
 	double vel = Clamp(player.body().getVelocity().x, -player.param().MAX_VELOCITY_X, player.param().MAX_VELOCITY_X);
-	player.LVRbody().setVelocity(Vec2(vel, player.body().getVelocity().y));
+	player.LVRbody().setVelocity(Vec2(vel, player.body().getVelocity().y));*/
 
 	camera.update();
 	camera.setCenter(Vec2(player.body().getPos().x, 200));
@@ -134,10 +135,10 @@ void Game::draw() const
 	{
 		chip.draw(HSV{ chip.id() * 10.0 });
 	}
-	for (const auto& enemy : enemys)
+	/*for (const auto& enemy : enemys)
 	{
 		enemy.draw(HSV{ enemy.id() * 10.0 });
-	}
+	}*/
 	
 }
 
