@@ -18,7 +18,7 @@ using App = SceneManager<GameState, ShareGameData>;
 
 
 
-static constexpr int32 CHIP_SIZE = 32;
+static constexpr int32 CHIP_SIZE = 64;
 // 2D 物理演算のシミュレーションステップ（秒）
 static constexpr double stepSec = (1.0 / 200.0);
 
