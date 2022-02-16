@@ -8,6 +8,10 @@ Game::Game(const InitData& init):IScene(init)
 	//std::visit(visitor, visitor.inspector.at(visitor.stateMachine.front()));
 	player.LVRbody() = world.createRect(P2Dynamic, Vec2(0, -100), RectF(Arg::center(CHIP_SIZE,CHIP_SIZE),CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0,1.0,0.2,0.0));
 	//player.LVRbody().addRect(RectF(30, 100));
+
+	player.LVRbody().addTriangle(Triangle(32+16,0,42+16,32,32+16,64), P2Material(1.0, 1.0, 0.2, 0.0));
+	player.LVRbody().addTriangle(Triangle(16,0,4,32,16,64), P2Material(1.0, 1.0, 0.2, 0.0));
+
 	player.LVRbody().setDamping(0.1);
 	player.LVRbody().setFixedRotation(true);
 	//RectF rr(Arg::center(CHIP_SIZE,CHIP_SIZE * 2), CHIP_SIZE, 32 / 2);
@@ -102,7 +106,7 @@ void Game::draw() const
 {
 	//TextureAsset(U"sampleBack").scaled(1.5,1.5).draw();
 	const auto t = camera.createTransformer();
-	player.body().draw();
+	player.body().drawWireframe();
 	for (const auto& chip : chips)
 	{
 		chip.draw(HSV{ chip.id() * 10.0 });
