@@ -1,29 +1,43 @@
 ﻿#include "stdafx.h"
 #include "Game.h"
-
+#include "LoadCSV.h"
 
 Game::Game(const InitData& init):IScene(init)
 {
 	//visitor.inspector[Accessor::first] = [&]() {return foo(); };
 	//std::visit(visitor, visitor.inspector.at(visitor.stateMachine.front()));
-	player.LVRbody() = world.createRect(P2Dynamic, Vec2(0, -100), RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0,1.0,0.2,0.0));
-	//player.LVRbody().addRect(RectF(30, 100));
+	player.m_body = world.createRect(P2Dynamic, Vec2(0, -100), RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0,1.0,0.2,0.0));
+	weight = world.createRect(P2Dynamic, Vec2(-200, -1000),RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0,0,1.0,100.0));
+	weight.setSleepEnabled(false);
+	player.m_body.setDamping(0.1);
+	player.m_body.setFixedRotation(true);
+	const CSV mapData(U"example/csv/sample.csv");
+	//mapData.columns(1);
+	//mapData.rows();
+	mapp.resize(mapData.columns(1), mapData.rows());
+	for (auto y : step(mapData.rows()))
+	{
+		for (auto x : step(mapData.columns(1)))
+		{
+			int tile = GetTile(mapData, mapData.rows(), x, y);
+			mapp[y][x] = tile;
 
-	player.LVRbody().addTriangle(Triangle(32+16,0,42+16,32,32+16,64), P2Material(1.0, 1.0, 0.2, 0.0));
-	player.LVRbody().addTriangle(Triangle(16,0,4,32,16,64), P2Material(1.0, 1.0, 0.2, 0.0));
-
-	player.LVRbody().setDamping(0.1);
-	player.LVRbody().setFixedRotation(true);
-	//RectF rr(Arg::center(CHIP_SIZE,CHIP_SIZE * 2), CHIP_SIZE, 32 / 2);
-	//player.LVRbody().addRect(rr);
-	Size size = { map.width(), map.height() };//マップの大きさ｛ｘ、ｙ｝
+		}
+	}
+	Size size = { mapData.columns(1), mapData.rows() };//マップの大きさ｛ｘ、ｙ｝
 	for (auto p : step(size)) {
-		if (map[p.y][p.x] == 1)
-			chips << world.createRect(P2Static, Vec2{ p.x * 64 - 1280 / 2,p.y * 64 - 720 / 2 }, RectF(64, 64, 64, 64), P2Material());
+		if (mapp[p.y][p.x] == 1)
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material());
+		if (mapp[p.y][p.x] == 2)
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material());
+		if (mapp[p.y][p.x] == 3)
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material());
+		if (mapp[p.y][p.x] == 4)
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material());
 	}
 	for (auto p : step(Size(enemy.width(),enemy.height()))) {
 		if (enemy[p.y][p.x] == 1)
-			enemys << world.createRect(P2Dynamic, Vec2{ p.x * 64 - 1280 / 2,p.y * 64 - 720 / 2 }, RectF(64, 64, 64, 64), P2Material());
+			enemys << world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material());
 	}
 	camera.setParameters(Camera2DParameters::NoControl());
 }
@@ -34,110 +48,207 @@ Game::Game(const InitData& init):IScene(init)
 void Game::update()
 {
 	
-	for (accumulatorSec += Scene::DeltaTime(); stepSec <= accumulatorSec; accumulatorSec -= stepSec)
+	for (ACCUMULATOR_SEC += Scene::DeltaTime(); STEP_SEC <= ACCUMULATOR_SEC; ACCUMULATOR_SEC -= STEP_SEC)
 	{
-		world.update(stepSec);
-
-		PrintDebug();
+		world.update(STEP_SEC);
 		for (auto& it : world.getCollisions())
 		{
+			PrintDebug();
 			//底辺が接触したとき
-			if (it.second.normal() == Vec2(0, 1)
-				and (KeySpace.pressed() or KeySpace.down())
-				and KeyA.pressed()
-				and not player.isJumpRestriction())
+			if (it.first.a == player.m_body.id()
+				and it.second.normal() == Vec2(0, 1))
 			{
-				player.LVRbody().applyLinearImpulse(Vec2(-player.param().KICK_POWER_X , player.param().JUMP_POWER / 4));
-				player.LVRisJumpRestriction() = true;
+				player.m_landingDelay.start();
+				if (player.shouldRecordVelocity())
+				{
+					//反発した直後の速度を保存
+					player.SetPreviousvelocity(player.m_body.getVelocity());
+					player.SetShouldRecordVelocity(false);
+				}
+				player.m_body.setVelocity(Vec2(0, 0));
+				player.m_body.setGravityScale(0);
+				player.SetIsOnGround(true);
+				
 			}
-			if (it.second.normal() == Vec2(0, 1)
-				and (KeySpace.pressed() or KeySpace.down())
-				and KeyD.pressed()
-				and not player.isJumpRestriction())
+			if (player.m_landingDelay.ms() > 500)
 			{
-				player.LVRbody().applyLinearImpulse(Vec2(player.param().KICK_POWER_X, player.param().JUMP_POWER / 4));
-				player.LVRisJumpRestriction() = true;
+				if (KeyA.pressed()
+					and player.GetPreviousVelocity().x > 0)
+				{
+					player.SetPreviousvelocity(Vec2(0, player.GetPreviousVelocity().y));
+				}
+				if (KeyD.pressed()
+					and player.GetPreviousVelocity().x < 0)
+				{
+					player.SetPreviousvelocity(Vec2(0, player.GetPreviousVelocity().y));
+				}
+				player.m_landingDelay.reset();
+				player.m_body.setVelocity(player.GetPreviousVelocity());
+				player.SetShouldRecordVelocity(true);
+				player.SetIsOnGround(false);
+				player.SetIsJumpRestriction(true);
+				player.m_body.setGravityScale(1);
+				
 			}
-			if (it.second.normal() == Vec2(0, 1)
-				and (KeySpace.pressed() or KeySpace.down())
-				and not(KeyA.pressed() or KeyD.pressed())
-				and not player.isJumpRestriction())
+			else 
 			{
-				player.LVRbody().applyLinearImpulse(Vec2(0, player.param().JUMP_POWER));
-				player.LVRisJumpRestriction() = true;
+				if ((KeySpace.pressed() or KeySpace.down())
+					and KeyA.pressed()
+					and player.GetIsOnGround())
+				{
+					player.m_landingDelay.reset();
+					player.m_body.setVelocity(player.GetPreviousVelocity());
+					player.m_body.setGravityScale(1);
+					player.m_body.applyLinearImpulse(Vec2(-player.m_param.floorKickPower, player.m_param.jumpPower / 4));
+					player.SetIsJumpRestriction(true);
+					player.SetIsOnGround(false);
+					player.SetShouldRecordVelocity(true);
+				}
+				if ((KeySpace.pressed() or KeySpace.down())
+					and KeyD.pressed()
+					and player.GetIsOnGround())
+				{
+					player.m_landingDelay.reset();
+					player.m_body.setVelocity(player.GetPreviousVelocity());
+					player.m_body.setGravityScale(1);
+					player.m_body.applyLinearImpulse(Vec2(player.m_param.floorKickPower, player.m_param.jumpPower / 4));
+					player.SetIsJumpRestriction(true);
+					player.SetIsOnGround(false);
+					player.SetShouldRecordVelocity(true);
+				}
+				if ((KeySpace.pressed() or KeySpace.down())
+					and not(KeyA.pressed() or KeyD.pressed())
+					and player.GetIsOnGround())
+				{
+					player.m_landingDelay.reset();
+					player.m_body.setVelocity(player.GetPreviousVelocity());
+					player.m_body.setGravityScale(1);
+					player.m_body.applyLinearImpulse(Vec2(0, player.m_param.jumpPower));
+					player.SetIsJumpRestriction(true);
+					player.SetIsOnGround(false);
+					player.SetShouldRecordVelocity(true);
+				}
+			}
+			if (KeyS.pressed())
+			{
+				player.m_landingDelay.reset();
+				player.m_body.setDamping(0.99);
+			}
+			if (KeyS.up()
+				and player.GetIsOnGround())
+			{
+				player.m_landingDelay.reset();
+				player.m_body.setGravityScale(1);
+				player.m_body.applyLinearImpulse(Vec2(0, player.m_param.jumpPower * 10));
+				player.SetIsJumpRestriction(true);
+				player.SetIsOnGround(false);
+				player.m_body.setDamping(0.1);
+				player.SetShouldRecordVelocity(true);
 			}
 			//右辺が接触したとき
-			if (it.second.normal() == Vec2(1, 0)
+			if (it.first.a == player.m_body.id()
+				and it.second.normal() == Vec2(1, 0)
 				and (KeyD.pressed() or KeyRight.pressed()))
 			{
-				player.LVRbody().setVelocity(Vec2(0, 0));
+				player.m_body.setVelocity(Vec2(0, 0));
 				if (KeySpace.down())
 				{
-					player.LVRbody().applyLinearImpulse(Vec2(-500, -500));
+					player.m_body.applyLinearImpulse(Vec2(-player.m_param.wallKickPower.x,player.m_param.wallKickPower.y));
 				}
 			}
-			if (it.second.normal() == Vec2(1, 0)
+
+			if (it.first.a == player.m_body.id()
+				and it.second.normal() == Vec2(1, 0)
 				and (KeyD.up() or KeyRight.up()))
 			{
-				player.LVRbody().applyLinearImpulse(Vec2(-10, 0));
+				player.m_body.applyLinearImpulse(Vec2(-10, 0));
 			}
 			//左辺が接触したとき
-			if (it.second.normal() == Vec2(-1, 0)
+			if (it.first.a == player.m_body.id()
+				and it.second.normal() == Vec2(-1, 0)
 				and (KeyA.pressed() or KeyLeft.pressed()))
 			{
-				player.LVRbody().setVelocity(Vec2(0, 0));
+				player.m_body.setVelocity(Vec2(0, 0));
 				if (KeySpace.down())
 				{
-					player.LVRbody().applyLinearImpulse(Vec2(500, -500));
+					player.m_body.applyLinearImpulse(player.m_param.wallKickPower);
 				}
 			}
-			if (it.second.normal() == Vec2(-1, 0)
+			if (it.first.a == player.m_body.id()
+				and it.second.normal() == Vec2(-1, 0)
 				and (KeyA.up() or KeyLeft.up()))
 			{
-				player.LVRbody().applyLinearImpulse(Vec2(10, 0));
+				player.m_body.applyLinearImpulse(Vec2(10, 0));
 			}
 		}
 		
 	}
+
 	if (KeySpace.up())
 	{
-		player.LVRisJumpRestriction() = false;
+		player.SetIsJumpRestriction(false);
+	}
+	if (KeyS.up())
+	{
+		player.m_body.setDamping(0.1);
+	}
+	if (player.m_landingDelay.ms() > 500)
+	{
+		if (KeyA.pressed()
+			and player.GetPreviousVelocity().x > 0)
+		{
+			player.SetPreviousvelocity(Vec2(0, player.GetPreviousVelocity().y));
+		}
+		if (KeyD.pressed()
+			and player.GetPreviousVelocity().x < 0)
+		{
+			player.SetPreviousvelocity(Vec2(0, player.GetPreviousVelocity().y));
+		}
+		player.m_landingDelay.reset();
+		player.m_body.setVelocity(player.GetPreviousVelocity());
+		player.SetShouldRecordVelocity(true);
+		player.SetIsOnGround(false);
+		player.SetIsJumpRestriction(true);
+		player.m_body.setGravityScale(1);
+
 	}
 
-	if (KeyA.pressed() or KeyLeft.pressed())
+	if ((KeyA.pressed() or KeyLeft.pressed())
+		and not player.GetIsOnGround())
 	{
-		player.LVRbody().applyForce(Vec2(-player.param().ACCELERATION_X * Scene::DeltaTime(), 0));
+		player.m_body.applyForce(Vec2(-player.m_param.accelerationX * Scene::DeltaTime(), 0));
 	}
-	if (KeyD.pressed() or KeyRight.pressed())
+	if ((KeyD.pressed() or KeyRight.pressed())
+		and not player.GetIsOnGround())
 	{
-		player.LVRbody().applyForce(Vec2(player.param().ACCELERATION_X * Scene::DeltaTime(), 0));
+		player.m_body.applyForce(Vec2(player.m_param.accelerationX * Scene::DeltaTime(), 0));
 	}
-	double vel = Clamp(player.body().getVelocity().x, -player.param().MAX_VELOCITY_X, player.param().MAX_VELOCITY_X);
-	player.LVRbody().setVelocity(Vec2(vel, player.body().getVelocity().y));
+	double vel = Clamp(player.m_body.getVelocity().x, -player.m_param.maxVelocity.x, player.m_param.maxVelocity.x);
+	player.m_body.setVelocity(Vec2(vel, player.m_body.getVelocity().y));
+
+	//enemys.remove_if([](P2Body body) {return body.getPos().y > 1000; });
 
 	camera.update();
-	camera.setCenter(Vec2(player.body().getPos().x, 200));
-	//camera.setScale(1);
-	
-	//PrintDebug();
+	camera.setCenter(Vec2(player.m_body.getPos().x, 0));
 }
 
 void Game::draw() const
 {
 	//TextureAsset(U"sampleBack").scaled(1.5,1.5).draw();
 	const auto t = camera.createTransformer();
-	player.body().draw();
+	player.m_body.draw();
 	TextureAsset(U"dummyPlayer")
 		.scaled(0.5,0.5)
-		.draw(player.body().getPos());
+		.draw(player.m_body.getPos());
 	for (const auto& chip : chips)
 	{
 		chip.draw(HSV{ chip.id() * 10.0 });
 	}
-	for (const auto& enemy : enemys)
+	for (const auto& it : enemys)
 	{
-		enemy.draw(HSV{ enemy.id() * 10.0 });
-	}	
+		it.draw(HSV{ it.id() * 10.0 });
+	}
+	weight.draw(Palette::Skyblue);
 }
 
 void Game::PrintDebug()
@@ -149,6 +260,13 @@ void Game::PrintDebug()
 		Print << it.first.b;
 		Print << it.second.normal();
 	}
-	Print << player.body().getInertia();
-	Print << player.body().getVelocity();
+	Print << player.m_body.getVelocity();
+	Print << player.GetDeltaVelocity();
+	Print << player.GetPreviousVelocity();
+	for (const auto& it : enemys)
+	{
+		Print << it.getPos();
+	}
 }
+
+

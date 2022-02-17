@@ -14,13 +14,14 @@ void Main()
 	//TextureAsset::Register(U"sampleBack", U"Image/sampleBack.png");
 	TextureAsset::Register(U"dummy256", U"Image/256x256.png");
 	TextureAsset::Register(U"dummyPlayer", U"Image/player.png",TextureDesc::Mipped);
+	TextureAsset::Register(U"dummychip", U"Image/sample.png");
 	App manager;
 	manager.add<Title>(GameState::Title);
 	manager.add<Game>(GameState::Game);
 	manager.add<Menu>(GameState::Menu);
 
 	// ゲームシーンから開始
-	manager.init(GameState::Title);
+	manager.init(GameState::Game);
 
 	while (System::Update())
 	{
