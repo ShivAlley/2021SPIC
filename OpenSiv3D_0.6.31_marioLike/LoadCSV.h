@@ -25,10 +25,10 @@ void LoadMap() {
 		for (auto y : step(gMapHeight))			
 		{
 			for (auto x : step(gMapWidth))
-			{
+	{
 				int tile = GetTile(gMap, gMapWidth, x, y);
 				gTextureAtlas((GridSize * tile) % AtlasWidth, GridSize * (tile / PerLineTiles), GridSize, GridSize).draw(x * gTileWidth, y * gTileHeight);
 			}
-		}
+	}
 	}
 }
