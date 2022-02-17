@@ -137,8 +137,7 @@ void Game::draw() const
 	for (const auto& enemy : enemys)
 	{
 		enemy.draw(HSV{ enemy.id() * 10.0 });
-	}
-	
+	}	
 }
 
 void Game::PrintDebug()

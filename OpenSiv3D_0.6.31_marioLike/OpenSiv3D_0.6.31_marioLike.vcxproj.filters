@@ -803,5 +803,8 @@
     <ClInclude Include="Delegater.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LoadCSV.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

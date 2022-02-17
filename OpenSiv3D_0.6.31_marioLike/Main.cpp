@@ -20,7 +20,7 @@ void Main()
 	manager.add<Menu>(GameState::Menu);
 
 	// ゲームシーンから開始
-	manager.init(GameState::Game);
+	manager.init(GameState::Title);
 
 	while (System::Update())
 	{
