@@ -20,10 +20,14 @@ using App = SceneManager<GameState, ShareGameData>;
 
 static constexpr int32 CHIP_SIZE = 64;
 // 2D 物理演算のシミュレーションステップ（秒）
-static constexpr double stepSec = (1.0 / 200.0);
+static constexpr double STEP_SEC = (1.0 / 200.0);
 
 // 2D 物理演算のシミュレーション蓄積時間（秒）
-static double accumulatorSec = 0.0;
+static double ACCUMULATOR_SEC = 0.0;
 
-static constexpr double gravity = 980;
+static constexpr double GRAVITY = 980;
+/// @brief マップチップ画像全体の横幅
+static constexpr int32 ATLAS_WIDTH = 256;
+/// @brief 一行のマップチップの数
+static constexpr int32 PER_LINE_TILES = 2;
 
