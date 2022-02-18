@@ -58,6 +58,24 @@ private:
 	
 };
 
+class Anime
+{
+private:
+	Texture m_texture;
+	int m_size;
+	int m_frame;
+	int m_index;
+	int m_count;
+public:
+	Anime(const Texture& texture, int size, int frame) :
+		m_texture(texture),
+		m_size(size),
+		m_frame(frame),
+		m_index(0),
+		m_count(0){}
+
+
+
 
 class Game : public App::Scene,
 	private Player
