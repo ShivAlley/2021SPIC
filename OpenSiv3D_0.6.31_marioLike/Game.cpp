@@ -2,6 +2,8 @@
 #include "Game.h"
 #include "LoadCSV.h"
 
+int anime(int count, int size, bool loop);
+
 Game::Game(const InitData& init) :IScene(init)
 {
 	//visitor.inspector[Accessor::first] = [&]() {return foo(); };
@@ -83,8 +85,8 @@ void Game::update()
 				};
 				enemys.each(f);
 			}
-			
-			
+
+
 
 			//右辺が接触したとき
 			if (it.first.a == player.m_body.id()
@@ -113,13 +115,13 @@ void Game::update()
 						and it.first.b == body.id())
 					{
 						//player.m_landingDelay.reset();
-						player.m_body.setVelocity(Vec2(0,0));
+						player.m_body.setVelocity(Vec2(0, 0));
 						player.m_body.setGravityScale(1);
 						player.m_body.applyLinearImpulse(Vec2(-300, -300));
 						//player.SetIsJumpRestriction(true);
 						//player.SetIsOnGround(false);
 						player.SetShouldRecordVelocity(true);
-					}  
+					}
 				};
 				enemys.each(f);
 			}
@@ -256,16 +258,25 @@ void Game::update()
 
 	camera.update();
 	camera.setCenter(Vec2(player.m_body.getPos().x, 0));
+	
 }
 
 void Game::draw() const
 {
+	static Texture PlayerAnime{ U"Image/player.png" };
 	//TextureAsset(U"sampleBack").scaled(1.5,1.5).draw();
 	const auto t = camera.createTransformer();
 	player.m_body.draw();
-	TextureAsset(U"dummyPlayer")
+	/*TextureAsset(U"dummyPlayer")
 		.scaled(0.5, 0.5)
-		.draw(player.m_body.getPos());
+		.draw(player.m_body.getPos());*/
+
+
+		PlayerAnime(256 * anime(10, 3,true), 0, 256, 256)
+			.scaled(0.5, 0.5)
+			.draw(player.m_body.getPos());
+
+
 	for (const auto& chip : chips)
 	{
 		chip.draw(HSV{ chip.id() * 10.0 });
@@ -293,4 +304,25 @@ void Game::PrintDebug()
 	{
 		Print << it.getPos();
 	}
+}
+
+int anime(int count, int size, bool loop)
+{
+	static int frame;
+	static int index = 0;
+
+	frame++;
+
+	if (loop) {
+		if (count < frame)
+		{
+			frame = 0;
+			index++;
+			if (index >= size)
+			{
+				index = 0;
+			}
+		}
+	}
+	return index;
 }

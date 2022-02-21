@@ -8,6 +8,7 @@ concept vector = requires (T & x) {
 	x.y;
 };
 
+
 struct Parameter
 {
 	Parameter() = default;
@@ -64,24 +65,8 @@ private:
 	static constexpr Vec2 WALL_KICK_POWER = { 500,-500 };
 };
 
-class Anime
-{
-private:
-	Texture m_texture;
-	int m_size;
-	int m_frame;
-	int m_index;
-	int m_count;
-public:
-	Anime(const Texture& texture, int size, int frame) :
-		m_texture(texture),
-		m_size(size),
-		m_frame(frame),
-		m_index(0),
-		m_count(0){}
-
-
-
+class Anime {
+};
 
 class Game : public App::Scene
 	//private Player
@@ -93,13 +78,13 @@ public:
 
 	void draw() const override;
 
+	
 private:
 #ifdef _DEBUG
 	void PrintDebug();
 #endif // _DEBUG
 	Visitor<void(void)> visitor;
 	P2Body weight;
-
 	P2World world{ GRAVITY };
 	Array<P2Body> chips;
 	Array<P2Body> enemys;
@@ -146,3 +131,5 @@ private:
 
 	Player player;
 };
+
+
