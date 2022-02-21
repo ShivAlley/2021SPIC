@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "common.h"
-#include <bitset>
 
 template <class T>
 concept vector = requires (T & x) {
@@ -37,22 +36,25 @@ public:
 			FLOOR_KICK_POWER,
 			WALL_KICK_POWER)
 	{}
+	P2Body& body() { return m_body; }
+	const P2Body& GetBody() const { return m_body; }
+	const Parameter& param() const { return m_param; }
+	Stopwatch& landingDelay(){ return m_landingDelay; }
+	const bool& GetIsJumpRestriction()const { return isJumpRestriction; }
+	void SetIsJumpRestriction(bool b) { isJumpRestriction = b; }
+	const Vec2& GetDeltaVelocity()const { return deltaVelocity; }
+	void SetDeltaVelocity(Vec2 v) { deltaVelocity = v; }
+	const Vec2& GetPreviousVelocity()const { return previousVelocity; }
+	void SetPreviousvelocity(Vec2 v) { previousVelocity = v; }
+	const bool& GetShouldRecordVelocity()const { return shouldRecordVelocity; }
+	void SetShouldRecordVelocity(bool b) { shouldRecordVelocity = b; }
+	const bool& GetIsOnGround()const { return isOnGround; }
+	void SetIsOnGround(bool b) { isOnGround = b; }
+	//bool& RefShouldRecordVelocity() { return m_shouldRecordVelocity; }
+private:
 	P2Body m_body;
 	Parameter m_param;
 	Stopwatch m_landingDelay{ StartImmediately::No };
-	const bool& GetIsJumpRestriction()const { return isJumpRestriction; }
-	bool& SetIsJumpRestriction(bool b) { return isJumpRestriction = b; }
-	const Vec2& GetDeltaVelocity()const { return deltaVelocity; }
-	Vec2& SetDeltaVelocity(Vec2 v) { return deltaVelocity = v; }
-	const Vec2& GetPreviousVelocity()const { return previousVelocity; }
-	Vec2& SetPreviousvelocity(Vec2 v) { return previousVelocity = v; }
-	const bool& GetShouldRecordVelocity()const { return shouldRecordVelocity; }
-	bool& SetShouldRecordVelocity(bool b) { return shouldRecordVelocity = b; }
-	const bool& GetIsOnGround()const { return isOnGround; }
-	bool& SetIsOnGround(bool b) { return isOnGround = b; }
-	//bool& RefShouldRecordVelocity() { return m_shouldRecordVelocity; }
-private:
-
 	Vec2 deltaVelocity{};
 	Vec2 previousVelocity{};
 	bool shouldRecordVelocity = true;
@@ -62,6 +64,59 @@ private:
 	static constexpr Vec2 ACCELERATION = { 30000,-100 };
 	static constexpr double FLOOR_KICK_POWER = 500;
 	static constexpr Vec2 WALL_KICK_POWER = { 500,-500 };
+};
+
+
+
+
+class Enemy
+{
+public:
+	Enemy(){}
+	Enemy(P2Body b):m_body(b){}
+	virtual ~Enemy(){}
+	P2Body& body() { return m_body; }
+	const P2Body& GetBody()const { return m_body; }
+protected:
+	P2Body m_body;
+	
+private:
+
+};
+
+class WalkingEnemy : public Enemy
+{
+public:
+	WalkingEnemy(P2Body b)
+		:Enemy(b)
+	{}
+	const bool& GetIsLookAtRight()const { return m_isLookAtRight; }
+	void ToggleIsLookAtRight() { m_isLookAtRight = not m_isLookAtRight; }
+private:
+	bool m_isLookAtRight = true;
+};
+
+class FlyingEnemy : public Enemy
+{
+public:
+	FlyingEnemy(P2Body b)
+		:Enemy(b)
+	{}
+	const bool& GetIsLookAtDown()const { return m_isLookAtDown; }
+	void ToggleIsLookAtDown() { m_isLookAtDown = not m_isLookAtDown; }
+
+private:
+	bool m_isLookAtDown = true;
+};
+
+class CannonEnemy : public Enemy
+{
+public:
+	CannonEnemy(P2Body b)
+		:Enemy(b)
+	{}
+private:
+
 };
 
 struct KilledEnemy
@@ -85,32 +140,16 @@ private:
 	void PrintDebug();
 #endif // _DEBUG
 	Visitor<void(void)> visitor;
-	P2Body weight;
-
 	P2World world{ GRAVITY };
 	Array<P2Body> chips;
-	Array<P2Body> enemys;
-	Grid<int8> map =
-	{
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-	};
+	Array<P2Body> coins;
+	//Array<P2Body> walkingEnemys;
+	Array<WalkingEnemy> walkingEnemys;
+	Array<FlyingEnemy> flyingEnemys;
+	Array<CannonEnemy> cannonEnemys;
 	Grid<int8> enemyData =
 	{
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -127,9 +166,11 @@ private:
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 	};
 
-	Grid<int8> mapp;
+	Grid<int8> map;
 
 	Camera2D camera{ Vec2{ 0, 0 } };
 
 	Player player;
+	void ControlPlayer();
+	void ControlEnemys();
 };
