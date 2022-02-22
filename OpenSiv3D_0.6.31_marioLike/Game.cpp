@@ -6,20 +6,23 @@ Game::Game(const InitData& init) : IScene(init)
 {
 	//visitor.inspector[Accessor::first] = [&]() {return foo(); };
 	//std::visit(visitor, visitor.inspector.at(visitor.stateMachine.front()));
-	player.body() = world.createRect(P2Dynamic, Vec2(0, -100), RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
+	//TopLeftをずらして指定して描画の時に地に足がつくようにする
+	//player.body() = world.createRect(P2Dynamic, Vec2(500, -100), RectF(Arg::topLeft(0,32),BODY_SIZE, BODY_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
+	player.body() = world.createRect(P2Dynamic, Vec2(500, -100), RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
 	player.body().setDamping(0.1);
 	player.body().setFixedRotation(true);
 	for (auto p : step(Size(enemyData.width(), enemyData.height()))) {
 		if (enemyData[p.y][p.x] == 1)
-			coins << world.createCircleSensor(P2Kinematic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, 10);
+			coins << world.createCircleSensor(P2Kinematic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, 10);
+		//TODO:仮のコイン
 	}
 	for (auto p : step(Size(enemyData.width(), enemyData.height()))) {
 		if (enemyData[p.y][p.x] == 1)
-			walkingEnemys << WalkingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material(10.0, 0.1, 0.0, 1.0)));
+			walkingEnemys << WalkingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material(10.0, 0.1, 0.0, 1.0)));
 		if (enemyData[p.y][p.x] == 2)
-			flyingEnemys << FlyingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material()));
+			flyingEnemys << FlyingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material()));
 		if (enemyData[p.y][p.x] == 3)
-			cannonEnemys << CannonEnemy(world.createRect(P2Kinematic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material()));
+			cannonEnemys << CannonEnemy(world.createRect(P2Kinematic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material()));
 	}
 	const CSV mapData(U"example/csv/sample.csv");
 	map.resize(mapData.columns(1), mapData.rows());
@@ -31,27 +34,21 @@ Game::Game(const InitData& init) : IScene(init)
 			map[y][x] = tile;
 		}
 	}
-	for (auto y : step(mapData.rows()))
-	{
-		for (auto x : step(mapData.columns(1)))
-		{
-			int tile = GetTile(mapData, mapData.rows(), x, y);
-			map[y][x] = tile;
-		}
-	}
+	
 	//HACK: スライムブロックはPreviousVelocityを小さくすれば実装出来るかも？
 	//ブロックの取得は敢えてMaterialsで密度を大きくしてGetMassで極端に重い物体を検知するとたぶん出来る
 	Size size = { mapData.columns(1), mapData.rows() };//マップの大きさ｛ｘ、ｙ｝
 	for (auto p : step(size)) {
 		if (map[p.y][p.x] == 1)
-			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material());
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
 		if (map[p.y][p.x] == 2)
-			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material());
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
 		if (map[p.y][p.x] == 3)
-			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material());
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
 		if (map[p.y][p.x] == 4)
-			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material());
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
 	}
+
 	for (auto&& enemy : walkingEnemys)
 	{
 		enemy.body().setFixedRotation(true);
@@ -59,6 +56,8 @@ Game::Game(const InitData& init) : IScene(init)
 		enemy.body().addCircle(Circle{ Arg::center(CHIP_SIZE / 2,CHIP_SIZE), 10 }, P2Material(0.1, 0.1, 0.0, 1.0));
 		enemy.body().addTriangle(Triangle{ 0,CHIP_SIZE / 2,40,270_deg }, P2Material(0.1, 0.1, 0.0, 1.0));
 		enemy.body().addTriangle(Triangle{ CHIP_SIZE,CHIP_SIZE / 2,40,90_deg }, P2Material(0.1, 0.1, 0.0, 1.0));
+		//enemy.body().addCircleSensor(Circle{ Arg::center(-4,CHIP_SIZE + 10),5 });
+		//enemy.body().addCircleSensor(Circle{ Arg::center(CHIP_SIZE + 4,CHIP_SIZE + 10),5 });
 		//enemy.body().addCircle(Circle{ Arg::center(0, CHIP_SIZE / 2), 10 }, P2Material(0.1, 0.1, 0.0, 1.0));
 		//enemy.body().addCircle(Circle{ Arg::center(CHIP_SIZE, CHIP_SIZE / 2), 10 }, P2Material(0.1, 0.1, 0.0, 1.0));
 	}
@@ -73,6 +72,7 @@ Game::Game(const InitData& init) : IScene(init)
 	{
 		enemy.body().setFixedRotation(true);
 	}
+	camera.setCenter(player.GetBody().getPos());
 	camera.setParameters(Camera2DParameters::NoControl());
 }
 
@@ -80,10 +80,12 @@ void Game::update()
 {
 	for (ACCUMULATOR_SEC += Scene::DeltaTime(); STEP_SEC <= ACCUMULATOR_SEC; ACCUMULATOR_SEC -= STEP_SEC)
 	{
+		PrintDebug();
 		world.update(STEP_SEC);
-		for (auto& it : world.getCollisions())
+		for (auto&& it : world.getCollisions())
 		{
-			PrintDebug();
+			//プレイヤーの主観での衝突判定
+			// 対応する辺ごとに敵のRangeを回しているよ　かわいいね（クソコード）
 			//底辺が接触したとき
 			if (it.first.a == player.body().id()
 				and it.second.normal() == Vec2(0, 1))
@@ -107,15 +109,7 @@ void Game::update()
 						//P2staticもしくはP2kinematicとは別途書く必要がある（めんどくさい）
 						enemy.body().release();
 
-						player.landingDelay().reset();
-						//playerのPreviousVelocityが上の方でy>0になってしまっているので跳ねない
-						//YのVelocityを０に設定し直しておく
-						player.body().setVelocity(Vec2(player.GetPreviousVelocity().x, 0));
-						player.body().setGravityScale(1);
-						player.body().applyLinearImpulse(Vec2(0, -500));
-						player.SetIsJumpRestriction(true);
-						player.SetIsOnGround(false);
-						player.SetShouldRecordVelocity(true);
+						ResponsePlayerBottomHit();
 					}
 				}
 				for (auto&& enemy : flyingEnemys)
@@ -124,29 +118,28 @@ void Game::update()
 						and it.first.b == enemy.GetBody().id())
 					{
 						enemy.body().release();
-						if (not(KeySpace.down() or KeySpace.pressed()))
-						{
-							player.landingDelay().reset();
-							player.body().setVelocity(Vec2(player.GetPreviousVelocity().x, 0));
-							player.body().setGravityScale(1);
-							player.body().applyLinearImpulse(Vec2(0, -500));
-							player.SetIsJumpRestriction(true);
-							player.SetIsOnGround(false);
-							player.SetShouldRecordVelocity(true);
-						}
+						ResponsePlayerBottomHit();
 					}
 				}
 			}
-
+			//無敵時間が３秒超えたらリセット
+			if (player.invincibleTimer().ms() > 3000)
+			{
+				player.SetIsInvincible(false);
+				
+				player.invincibleTimer().reset();
+			}
+			
 			//右辺が接触したとき
 			if (it.first.a == player.body().id()
 				and it.second.normal() == Vec2(1, 0)
-				and (KeyD.pressed() or KeyRight.pressed()))
+				and isInputRightDirection()
+				and not player.GetIsInvinvible())
 			{
 				player.body().setVelocity(Vec2(0, 0));
 				if (KeySpace.down())
 				{
-					player.body().applyLinearImpulse(Vec2(-player.param().wallKickPower.x, player.param().wallKickPower.y));
+					player.body().applyLinearImpulse(Vec2(-player.GetParam().wallKickPower.x, player.GetParam().wallKickPower.y));
 				}
 			}
 
@@ -165,10 +158,7 @@ void Game::update()
 					if (it.first.a == player.body().id()
 						and it.first.b == enemy.GetBody().id())
 					{
-						player.body().setVelocity(Vec2(0, 0));
-						player.body().setGravityScale(1);
-						player.body().applyLinearImpulse(Vec2(-300, -300));
-						player.SetShouldRecordVelocity(true);
+						ResponsePlayerRightHit();
 					}
 				}
 				for (auto&& enemy : flyingEnemys)
@@ -176,22 +166,21 @@ void Game::update()
 					if (it.first.a == player.body().id()
 						and it.first.b == enemy.GetBody().id())
 					{
-						player.body().setVelocity(Vec2(0, 0));
-						player.body().setGravityScale(1);
-						player.body().applyLinearImpulse(Vec2(-300, -300));
-						player.SetShouldRecordVelocity(true);
+						ResponsePlayerRightHit();
+
 					}
 				}
 			}
 			//左辺が接触したとき
 			if (it.first.a == player.body().id()
 				and it.second.normal() == Vec2(-1, 0)
-				and (KeyA.pressed() or KeyLeft.pressed()))
+				and isInputLeftDirection()
+				and not player.GetIsInvinvible())
 			{
 				player.body().setVelocity(Vec2(0, 0));
 				if (KeySpace.down())
 				{
-					player.body().applyLinearImpulse(player.param().wallKickPower);
+					player.body().applyLinearImpulse(player.GetParam().wallKickPower);
 				}
 			}
 			if (it.first.a == player.body().id()
@@ -208,10 +197,8 @@ void Game::update()
 					if (it.first.a == player.body().id()
 						and it.first.b == enemy.GetBody().id())
 					{
-						player.body().setVelocity(Vec2(0, 0));
-						player.body().setGravityScale(1);
-						player.body().applyLinearImpulse(Vec2(300, -300));
-						player.SetShouldRecordVelocity(true);
+						ResponsePlayerLeftHit();
+
 					}
 				}
 				for (auto&& enemy : flyingEnemys)
@@ -219,22 +206,32 @@ void Game::update()
 					if (it.first.a == player.body().id()
 						and it.first.b == enemy.GetBody().id())
 					{
-						player.body().setVelocity(Vec2(0, 0));
-						player.body().setGravityScale(1);
-						player.body().applyLinearImpulse(Vec2(300, -300));
-						player.SetShouldRecordVelocity(true);
+						ResponsePlayerLeftHit();
+
 					}
 				}
 			}
 			//上辺が接触したとき
 			if (it.first.a == player.body().id()
-				and it.second.normal() == Vec2(0, -1))
+				and it.second.normal() == Vec2(0, -1)
+				and not player.GetIsInvinvible())
 			{
 				for (auto&& enemy : walkingEnemys)
 				{
 					if (it.first.a == player.body().id()
 						and it.first.b == enemy.GetBody().id())
 					{
+						//プレイヤーの中心座標が敵より右にあったら
+						//反対側（左方向へ）ノックバックを受ける
+						//つまり右からぶつかっている時
+						if (player.GetBody().getPos().x + CHIP_SIZE / 2 > enemy.GetBody().getPos().x + CHIP_SIZE / 2)
+						{
+							ResponsePlayerRightHit();
+						}
+						else //左だったら逆
+						{
+							ResponsePlayerLeftHit();
+						}
 					}
 				}
 				for (auto&& enemy : flyingEnemys)
@@ -242,6 +239,19 @@ void Game::update()
 					if (it.first.a == player.body().id()
 						and it.first.b == enemy.GetBody().id())
 					{
+						//プレイヤーの中心座標が敵より右にあったら
+						//反対側（左方向へ）ノックバックを受ける
+						//つまり右からぶつかっている時
+						if (player.GetBody().getPos().x + CHIP_SIZE / 2 > enemy.GetBody().getPos().x + CHIP_SIZE / 2)
+						{
+							ResponsePlayerRightHit();
+
+						}
+						else //左だったら逆
+						{
+							ResponsePlayerLeftHit();
+
+						}
 					}
 				}
 			}
@@ -254,11 +264,23 @@ void Game::update()
 					//プレイヤーと接触したときはなにもしない
 				}
 				else if ((it.first.a == enemy.GetBody().id() or
-							it.first.b == enemy.GetBody().id())
+						it.first.b == enemy.GetBody().id())
 						 and (it.second.normal() == Vec2(1, 0) or
-							 it.second.normal() == Vec2(-1, 0)))
+							 it.second.normal() == Vec2(-1, 0))
+						and enemy.turnCooldown().ms() > 100)
 				{
 					enemy.ToggleIsLookAtRight();
+					enemy.turnCooldown().restart();
+				}
+				//マップデータを参照して何もない空間を検知すると反転する
+				//高速回転バグの対策として反転にはクールタイムを用意している
+				//原始的な対策であるため外れ値には対応できない
+				Vector2D<int32> vec = enemy.GetBody().getPos() + Vector2D<int32>(0,CHIP_SIZE + CHIP_SIZE / 2);
+				if (map[vec.y / CHIP_SIZE][vec.x / CHIP_SIZE] == 0
+					and enemy.turnCooldown().ms() > 500)
+				{
+					enemy.ToggleIsLookAtRight();
+					enemy.turnCooldown().restart();
 				}
 			}
 			for (auto&& enemy : flyingEnemys)
@@ -268,25 +290,32 @@ void Game::update()
 				{
 					//プレイヤーと接触したときはなにもしない
 				}
-				else if ((it.first.a == enemy.GetBody().id() or
-					it.first.b == enemy.GetBody().id())
+				//壁にぶつかるか5秒経過すると反転する
+				else if (it.first.a == enemy.GetBody().id()
 						 and (it.second.normal() == Vec2(0, 1) or
 							 it.second.normal() == Vec2(0, -1)))
 				{
 					enemy.ToggleIsLookAtDown();
 					enemy.turnWatch().restart();
 				}
-				if (enemy.GetTurnWatch().ms() > 3000)
+				if (enemy.GetTurnWatch().ms() > 5000)
 				{
 					enemy.ToggleIsLookAtDown();
 					enemy.turnWatch().restart();
+					
 				}
+				
 			}
 			for (auto&& enemy : cannonEnemys)
 			{
-				//こいつは反転しない
-				if (it.first.a == enemy.GetBody().id())
+				//X座標の比較で反転フラグを立てる
+				if (player.GetBody().getPos().x > enemy.GetBody().getPos().x)
 				{
+					enemy.SetIsLookAtRight(true);
+				}
+				else
+				{
+					enemy.SetIsLookAtRight(false);
 				}
 			}
 			for (auto&& enemy : bulletEnemys)
@@ -296,6 +325,10 @@ void Game::update()
 					and it.first.b == enemy.GetBody().id())
 				{
 					enemy.body().release();
+					player.SetIsInvincible(true);
+					player.invincibleTimer().start();
+					player.DecreaseHealth();
+
 				}
 			}
 		}
@@ -306,7 +339,10 @@ void Game::update()
 	ControlEnemys();
 
 	camera.update();
-	camera.setCenter(Vec2(player.body().getPos().x, 0));
+	Vec2 Center = player.GetBody().getPos();
+	//スクロールの制限をいい感じにする　後ろの/2だけ調整するかも
+	Center.y = Clamp(Center.y, Scene::CenterF().y, static_cast<double>(CHIP_SIZE * 32) - Scene::CenterF().y / 2);
+	camera.setCenter(Center);
 }
 
 void Game::draw() const
@@ -324,6 +360,7 @@ void Game::draw() const
 	for (const auto& enemy : walkingEnemys)
 	{
 		enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
+
 	}
 	for (const auto& enemy : flyingEnemys)
 	{
@@ -356,18 +393,19 @@ void Game::PrintDebug()
 		Print << it.first.b;
 		Print << it.second.normal();
 	}
+	Print << player.GetHealth();
 }
 
 void Game::ControlPlayer()
 {
-	if (player.landingDelay().ms() > 500)
+	if (player.landingDelay().ms() > 250)
 	{
-		if (KeyA.pressed()
+		if (isInputLeftDirection()
 			and player.GetPreviousVelocity().x > 0)
 		{
 			player.SetPreviousvelocity(Vec2(0, player.GetPreviousVelocity().y));
 		}
-		if (KeyD.pressed()
+		if (isInputRightDirection()
 			and player.GetPreviousVelocity().x < 0)
 		{
 			player.SetPreviousvelocity(Vec2(0, player.GetPreviousVelocity().y));
@@ -379,81 +417,142 @@ void Game::ControlPlayer()
 		player.SetIsJumpRestriction(true);
 		player.body().setGravityScale(1);
 	}
-	if (player.GetIsOnGround())
-	{
-		if ((KeySpace.pressed() or KeySpace.down())
-			and KeyA.pressed())
-		{
-			player.landingDelay().reset();
-			player.body().setVelocity(player.GetPreviousVelocity());
-			player.body().setGravityScale(1);
-			player.body().applyLinearImpulse(Vec2(-player.param().floorKickPower, player.param().jumpPower / 4));
-			player.SetIsJumpRestriction(true);
-			player.SetIsOnGround(false);
-			player.SetShouldRecordVelocity(true);
-		}
-		if ((KeySpace.pressed() or KeySpace.down())
-			and KeyD.pressed())
-		{
-			player.landingDelay().reset();
-			player.body().setVelocity(player.GetPreviousVelocity());
-			player.body().setGravityScale(1);
-			player.body().applyLinearImpulse(Vec2(player.param().floorKickPower, player.param().jumpPower / 4));
-			player.SetIsJumpRestriction(true);
-			player.SetIsOnGround(false);
-			player.SetShouldRecordVelocity(true);
-		}
-		if ((KeySpace.pressed() or KeySpace.down())
-			and not(KeyA.pressed() or KeyD.pressed()))
-		{
-			player.landingDelay().reset();
-			player.body().setVelocity(player.GetPreviousVelocity());
-			player.body().setGravityScale(1);
-			player.body().applyLinearImpulse(Vec2(0, player.param().jumpPower));
-			player.SetIsJumpRestriction(true);
-			player.SetIsOnGround(false);
-			player.SetShouldRecordVelocity(true);
-		}
-	}
+	
 	if (KeySpace.up())
 	{
 		player.SetIsJumpRestriction(false);
 	}
-	if (KeyS.pressed())
+	if (isInputDownDirection())
 	{
 		player.landingDelay().reset();
-		player.body().setDamping(0.95);
+		player.body().setDamping(0.99);
 	}
-	if (KeyS.up())
+	if (isInputDownDirection()
+		and (isInputLeftDirection() or isInputRightDirection()))
+	{
+		player.body().setDamping(0.8);
+	}
+	if (isReleaseDownDirection())
 	{
 		player.body().setDamping(0.1);
 	}
-	if (KeyS.up()
+	if (isReleaseDownDirection()
 		and player.GetIsOnGround())
 	{
 		player.landingDelay().reset();
 		player.body().setGravityScale(1);
-		player.body().applyLinearImpulse(Vec2(0, player.param().jumpPower * 10));
-		player.SetIsJumpRestriction(true);
+		player.body().applyLinearImpulse(Vec2(0, player.GetParam().jumpPower * 10));
+		//KeyS.upなのでここだけSetFalse
+		player.SetIsJumpRestriction(false);
 		player.SetIsOnGround(false);
 		player.body().setDamping(0.1);
 		player.SetShouldRecordVelocity(true);
 	}
+	if (player.GetIsOnGround()
+		and not player.GetIsJumpRestriction())
+	{
+		if ((KeySpace.pressed() or KeySpace.down())
+			and isInputLeftDirection())
+		{
+			player.landingDelay().reset();
+			player.body().setVelocity(player.GetPreviousVelocity());
+			player.body().setGravityScale(1);
+			player.body().applyLinearImpulse(Vec2(-player.GetParam().floorKickPower, player.GetParam().jumpPower / 4));
+			player.SetIsJumpRestriction(true);
+			player.SetIsOnGround(false);
+			player.SetShouldRecordVelocity(true);
+		}
+		if ((KeySpace.pressed() or KeySpace.down())
+			and isInputRightDirection())
+		{
+			player.landingDelay().reset();
+			player.body().setVelocity(player.GetPreviousVelocity());
+			player.body().setGravityScale(1);
+			player.body().applyLinearImpulse(Vec2(player.GetParam().floorKickPower, player.GetParam().jumpPower / 4));
+			player.SetIsJumpRestriction(true);
+			player.SetIsOnGround(false);
+			player.SetShouldRecordVelocity(true);
+		}
+		if ((KeySpace.pressed() or KeySpace.down())
+			and not(isInputLeftDirection() or isInputRightDirection()))
+		{
+			player.landingDelay().reset();
+			player.body().setVelocity(player.GetPreviousVelocity());
+			player.body().setGravityScale(1);
+			player.body().applyLinearImpulse(Vec2(0, player.GetParam().jumpPower));
+			player.SetIsJumpRestriction(true);
+			player.SetIsOnGround(false);
+			player.SetShouldRecordVelocity(true);
+		}
+	}
 
-	if ((KeyA.pressed() or KeyLeft.pressed())
+	if (isInputLeftDirection()
 		and not player.GetIsOnGround())
 	{
-		player.body().applyForce(Vec2(-player.param().accelerationX * Scene::DeltaTime(), 0));
+		player.body().applyForce(Vec2(-player.GetParam().accelerationX * Scene::DeltaTime(), 0));
 	}
-	if ((KeyD.pressed() or KeyRight.pressed())
+	if (isInputRightDirection()
 		and not player.GetIsOnGround())
 	{
-		player.body().applyForce(Vec2(player.param().accelerationX * Scene::DeltaTime(), 0));
+		player.body().applyForce(Vec2(player.GetParam().accelerationX * Scene::DeltaTime(), 0));
 	}
 
-	double vel = Clamp(player.body().getVelocity().x, -player.param().maxVelocity.x, player.param().maxVelocity.x);
+	double vel = Clamp(player.body().getVelocity().x, -player.GetParam().maxVelocity.x, player.GetParam().maxVelocity.x);
 	player.body().setVelocity(Vec2(vel, player.body().getVelocity().y));
 }
+
+void Game::ResponsePlayerLeftHit()
+{
+	player.body().setVelocity(Vec2(0, 0));
+	player.body().setGravityScale(1);
+	player.body().applyLinearImpulse(player.GetParam().knockbackedToRight);
+	player.SetShouldRecordVelocity(true);
+	player.SetIsOnGround(false);
+	player.SetIsInvincible(true);
+	player.invincibleTimer().start();
+	player.DecreaseHealth();
+}
+
+void Game::ResponsePlayerRightHit()
+{
+	player.body().setVelocity(Vec2(0, 0));
+	player.body().setGravityScale(1);
+	player.body().applyLinearImpulse(player.GetParam().knockbackedToLeft);
+	player.SetShouldRecordVelocity(true);
+	player.SetIsOnGround(false);
+	player.SetIsInvincible(true);
+	player.invincibleTimer().start();
+	player.DecreaseHealth();
+}
+
+void Game::ResponsePlayerBottomHit()
+{
+	if (KeySpace.pressed() or KeySpace.down())
+	{
+		player.landingDelay().reset();
+		//playerのPreviousVelocityが上の方でy>0になってしまっているので跳ねない
+		//YのVelocityを０に設定し直しておく
+		player.body().setVelocity(Vec2(player.GetPreviousVelocity().x, 0));
+		player.body().setGravityScale(1);
+		player.body().applyLinearImpulse(Vec2(0, -800));
+		player.SetIsJumpRestriction(true);
+		player.SetIsOnGround(false);
+		player.SetShouldRecordVelocity(true);
+	}
+	else
+	{
+		player.landingDelay().reset();
+		//playerのPreviousVelocityが上の方でy>0になってしまっているので跳ねない
+		//YのVelocityを０に設定し直しておく
+		player.body().setVelocity(Vec2(player.GetPreviousVelocity().x, 0));
+		player.body().setGravityScale(1);
+		player.body().applyLinearImpulse(Vec2(0, -300));
+		player.SetIsJumpRestriction(true);
+		player.SetIsOnGround(false);
+		player.SetShouldRecordVelocity(true);
+	}
+}
+
 
 void Game::ControlEnemys()
 {
@@ -461,11 +560,13 @@ void Game::ControlEnemys()
 	{
 		if (enemy.GetIsLookAtRight())
 		{
-			enemy.body().applyForce(Vec2(1000000 * Scene::DeltaTime(), 0));
+			//enemy.body().applyForce(Vec2(1000000 * Scene::DeltaTime(), 0));
+			enemy.body().setVelocity(enemy.GetBody().getVelocity() + Vec2(100, 0));
 		}
 		else
 		{
-			enemy.body().applyForce(Vec2(-(1000000 * Scene::DeltaTime()), 0));
+			//enemy.body().applyForce(Vec2(-(1000000 * Scene::DeltaTime()), 0));
+			enemy.body().setVelocity(enemy.GetBody().getVelocity() + Vec2(-100, 0));
 		}
 		Vec2 clampVel{};
 		clampVel.x = Clamp(enemy.body().getVelocity().x, -100.0, 100.0);
@@ -490,21 +591,41 @@ void Game::ControlEnemys()
 	}
 	for (auto&& enemy : cannonEnemys)
 	{
-		if (enemy.GetShotInterval().ms() > 3000)
+		double diff = AbsDiff(player.GetBody().getPos().x, enemy.GetBody().getPos().x);
+
+		if (enemy.GetShotInterval().ms() > 3000
+			and diff < Scene::Width())
 		{
-			BulletEnemy bullet = BulletEnemy(world.createCircleSensor(P2Dynamic, enemy.GetBody().getPos() + Vec2(0, CHIP_SIZE / 2), 10)
-										, Vec2(-100, 0));
-			bullet.body().setGravityScale(0);
-			bulletEnemys << bullet;
-			enemy.shotInterval().restart();
+			if (enemy.GetIsLookAtRight())
+			{
+				BulletEnemy bullet = BulletEnemy(world.createCircleSensor(P2Dynamic, enemy.GetBody().getPos() + Vec2(CHIP_SIZE, CHIP_SIZE / 2), 10)
+											, Vec2(100, 0));
+				bullet.body().setGravityScale(0);
+				bulletEnemys << bullet;
+				enemy.shotInterval().restart();
+			}
+			else
+			{
+				BulletEnemy bullet = BulletEnemy(world.createCircleSensor(P2Dynamic, enemy.GetBody().getPos() + Vec2(0, CHIP_SIZE / 2), 10)
+											, Vec2(-100, 0));
+				bullet.body().setGravityScale(0);
+				bulletEnemys << bullet;
+				enemy.shotInterval().restart();
+			}
 		}
 
 	}
 	for (auto&& bullet : bulletEnemys)
 	{
+		double diff = AbsDiff(player.GetBody().getPos().x, bullet.GetBody().getPos().x);
+
 		//固定値で動かす
 		bullet.body().moveBy(bullet.GetVelocity() * Scene::DeltaTime());
-
+		if (bullet.GetBody().getPos().x < 0
+			or diff > Scene::Width())
+		{
+			bullet.body().release();
+		}
 	}
 	for (auto&& coin : coins)
 	{
@@ -525,6 +646,7 @@ void Game::FirePakkun_oldCannonEnemy()
 	{
 		if (enemy.GetShotInterval().ms() > 3000)
 		{
+			//敵とプレイヤーとの中心座標のベクトルを正規化
 			bulletEnemys << BulletEnemy(world.createCircleSensor(P2Kinematic, enemy.GetBody().getPos(), 10),
 										Normalize((player.GetBody().getPos() + Vec2(CHIP_SIZE / 2, CHIP_SIZE)) - enemy.GetBody().getPos()) * 5);
 

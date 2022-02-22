@@ -2,7 +2,7 @@
 #include "common.h"
 
 template <class T>
-concept vector = requires (T & x) {
+concept vec2D = requires (T & x) {
 	x.x;
 	x.y;
 };
@@ -10,13 +10,16 @@ concept vector = requires (T & x) {
 struct Parameter
 {
 	Parameter() = default;
-	template<vector v, typename T>
-	Parameter(v v1, v v2, T d1, v v3)
+	//増築を繰り返したせいで最早templeteの体をなしていない
+	template<vec2D v, typename T>
+	Parameter(v v1, v v2, T d1, v v3,v v4)
 		:maxVelocity(v1)
 		, accelerationX(v2.x)
 		, jumpPower(v2.y)
 		, floorKickPower(d1)
 		, wallKickPower(v3)
+		, knockbackedToLeft(v4)
+		, knockbackedToRight(Vec2(-v4.x, v4.y))
 	{}
 
 	Vec2 maxVelocity;
@@ -24,6 +27,8 @@ struct Parameter
 	double accelerationX;
 	double jumpPower;
 	double floorKickPower;
+	Vec2 knockbackedToLeft;
+	Vec2 knockbackedToRight;
 };
 
 class Player //: private Parameter
@@ -34,36 +39,47 @@ public:
 			MAX_VEL,
 			ACCELERATION,
 			FLOOR_KICK_POWER,
-			WALL_KICK_POWER)
+			WALL_KICK_POWER,
+			KNOCKBACKED_POWER)
 	{}
 	P2Body& body() { return m_body; }
 	const P2Body& GetBody() const { return m_body; }
-	const Parameter& param() const { return m_param; }
+	const Parameter& GetParam() const { return m_param; }
 	Stopwatch& landingDelay(){ return m_landingDelay; }
-	const bool& GetIsJumpRestriction()const { return isJumpRestriction; }
-	void SetIsJumpRestriction(bool b) { isJumpRestriction = b; }
-	const Vec2& GetDeltaVelocity()const { return deltaVelocity; }
-	void SetDeltaVelocity(Vec2 v) { deltaVelocity = v; }
-	const Vec2& GetPreviousVelocity()const { return previousVelocity; }
-	void SetPreviousvelocity(Vec2 v) { previousVelocity = v; }
-	const bool& GetShouldRecordVelocity()const { return shouldRecordVelocity; }
-	void SetShouldRecordVelocity(bool b) { shouldRecordVelocity = b; }
-	const bool& GetIsOnGround()const { return isOnGround; }
-	void SetIsOnGround(bool b) { isOnGround = b; }
+	Stopwatch& invincibleTimer(){ return m_invincibleTimer; }
+	const bool& GetIsJumpRestriction()const { return m_isJumpRestriction; }
+	void SetIsJumpRestriction(bool b) { m_isJumpRestriction = b; }
+	const Vec2& GetDeltaVelocity()const { return m_deltaVelocity; }
+	void SetDeltaVelocity(Vec2 v) { m_deltaVelocity = v; }
+	const Vec2& GetPreviousVelocity()const { return m_previousVelocity; }
+	void SetPreviousvelocity(Vec2 v) { m_previousVelocity = v; }
+	const bool& GetShouldRecordVelocity()const { return m_shouldRecordVelocity; }
+	void SetShouldRecordVelocity(bool b) { m_shouldRecordVelocity = b; }
+	const bool& GetIsOnGround()const { return m_isOnGround; }
+	void SetIsOnGround(bool b) { m_isOnGround = b; }
+	const bool& GetIsInvinvible()const { return m_isInvincible; }
+	void SetIsInvincible(bool b) { m_isInvincible = b; }
+	const int32& GetHealth()const { return m_health; }
+	void DecreaseHealth() { m_health--; }
+	void IncreaseHealth() { m_health++; }
 	//bool& RefShouldRecordVelocity() { return m_shouldRecordVelocity; }
 private:
 	P2Body m_body;
 	Parameter m_param;
 	Stopwatch m_landingDelay{ StartImmediately::No };
-	Vec2 deltaVelocity{};
-	Vec2 previousVelocity{};
-	bool shouldRecordVelocity = true;
-	bool isJumpRestriction = false;
-	bool isOnGround = false;
+	Stopwatch m_invincibleTimer{ StartImmediately::No };
+	Vec2 m_deltaVelocity{};
+	Vec2 m_previousVelocity{};
+	int32 m_health{3};
+	bool m_shouldRecordVelocity = true;
+	bool m_isJumpRestriction = false;
+	bool m_isOnGround = false;
+	bool m_isInvincible = false;
 	static constexpr Vec2 MAX_VEL = { 1000,1000 };
 	static constexpr Vec2 ACCELERATION = { 30000,-100 };
 	static constexpr double FLOOR_KICK_POWER = 500;
 	static constexpr Vec2 WALL_KICK_POWER = { 500,-500 };
+	static constexpr Vec2 KNOCKBACKED_POWER = { -300,-300 };
 };
 
 
@@ -92,9 +108,11 @@ public:
 	{}
 	const bool& GetIsLookAtRight()const { return m_isLookAtRight; }
 	void ToggleIsLookAtRight() { m_isLookAtRight = not m_isLookAtRight; }
+	Stopwatch& turnCooldown() { return m_turnCooldown; }
 private:
-	bool m_isLookAtRight = true;
 
+	bool m_isLookAtRight = true;
+	Stopwatch m_turnCooldown{ StartImmediately::Yes };
 };
 
 class FlyingEnemy : public Enemy
@@ -121,9 +139,12 @@ public:
 	{}
 	Stopwatch& shotInterval() { return m_shotInterval; }
 	const Stopwatch& GetShotInterval()const { return m_shotInterval; }
+	const bool& GetIsLookAtRight()const { return m_isLookAtRight; }
+	void SetIsLookAtRight(bool b) { m_isLookAtRight = b; }
 
 private:
 	Stopwatch m_shotInterval{ StartImmediately::Yes };
+	bool m_isLookAtRight = false;
 };
 
 class BulletEnemy : public Enemy
@@ -193,25 +214,31 @@ private:
 
 	Player player;
 	void ControlPlayer();
+	void ResponsePlayerLeftHit();
+	void ResponsePlayerRightHit();
+	void ResponsePlayerBottomHit();
 	void ControlEnemys();
 	[[maybe_unused]]
 	void FirePakkun_oldCannonEnemy();
-	bool InputLeftDirection()
+	bool isInputLeftDirection()
 	{
 		return (KeyA.pressed() or KeyLeft.pressed())
 				or (KeyA.down() or KeyLeft.down());
 	}
-	bool InputRightDirection()
+	bool isInputRightDirection()
 	{
 		return (KeyD.pressed() or KeyRight.pressed())
 			or (KeyD.down() or KeyRight.down());
 
 	}
-	bool InputDownDirection()
+	bool isInputDownDirection()
 	{
-		return (KeyS.pressed() or KeyDown.pressed())
-			or (KeyS.down() or KeyDown.down());
+		return (KeyS.pressed() or KeyDown.pressed());
 
+	}
+	bool isReleaseDownDirection()
+	{
+		return (KeyS.up() or KeyDown.up());
 	}
 	
 };
