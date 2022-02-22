@@ -2,7 +2,6 @@
 #include "Game.h"
 #include "LoadCSV.h"
 
-
 Game::Game(const InitData& init) : IScene(init)
 {
 	//visitor.inspector[Accessor::first] = [&]() {return foo(); };
@@ -14,13 +13,15 @@ Game::Game(const InitData& init) : IScene(init)
 	player.body().setFixedRotation(true);
 	for (auto p : step(Size(enemyData.width(), enemyData.height()))) {
 		if (enemyData[p.y][p.x] == 1)
-			coins << world.createCircleSensor(P2Static, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, 10);
+			coins << world.createCircleSensor(P2Kinematic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, 10);
 	}
 	for (auto p : step(Size(enemyData.width(), enemyData.height()))) {
 		if (enemyData[p.y][p.x] == 1)
-			walkingEnemys << WalkingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material(10.0,0.1,0.0,1.0)));
+			walkingEnemys << WalkingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material(10.0, 0.1, 0.0, 1.0)));
 		if (enemyData[p.y][p.x] == 2)
 			flyingEnemys << FlyingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material()));
+		if (enemyData[p.y][p.x] == 3)
+			cannonEnemys << CannonEnemy(world.createRect(P2Kinematic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material()));
 	}
 	const CSV mapData(U"example/csv/sample.csv");
 	//mapData.columns(1);
@@ -59,7 +60,7 @@ Game::Game(const InitData& init) : IScene(init)
 	{
 		enemy.body().setFixedRotation(true);
 		//enemy.body().addTriangle(Triangle{ CHIP_SIZE / 2, CHIP_SIZE, 20 ,180_deg }, P2Material(0.1, 0.1, 0.0, 1.0));
-		enemy.body().addCircle(Circle{ Arg::center(CHIP_SIZE/2,CHIP_SIZE), 10 }, P2Material(0.1, 0.1, 0.0, 1.0));
+		enemy.body().addCircle(Circle{ Arg::center(CHIP_SIZE / 2,CHIP_SIZE), 10 }, P2Material(0.1, 0.1, 0.0, 1.0));
 		enemy.body().addTriangle(Triangle{ 0,CHIP_SIZE / 2,40,270_deg }, P2Material(0.1, 0.1, 0.0, 1.0));
 		enemy.body().addTriangle(Triangle{ CHIP_SIZE,CHIP_SIZE / 2,40,90_deg }, P2Material(0.1, 0.1, 0.0, 1.0));
 		//enemy.body().addCircle(Circle{ Arg::center(0, CHIP_SIZE / 2), 10 }, P2Material(0.1, 0.1, 0.0, 1.0));
@@ -68,6 +69,9 @@ Game::Game(const InitData& init) : IScene(init)
 	for (auto&& enemy : flyingEnemys)
 	{
 		enemy.body().setFixedRotation(true);
+		enemy.body().setGravityScale(0);
+		enemy.body().addTriangle(Triangle{ CHIP_SIZE / 2,0,40, }, P2Material(1.0, 0.1, 0.0, 1.0));
+		enemy.body().addTriangle(Triangle{ CHIP_SIZE / 2,CHIP_SIZE,40,180_deg }, P2Material(1.0, 0.1, 0.0, 1.0));
 	}
 	for (auto&& enemy : cannonEnemys)
 	{
@@ -84,7 +88,7 @@ void Game::update()
 		world.update(STEP_SEC);
 		for (auto& it : world.getCollisions())
 		{
-			PrintDebug();
+			//PrintDebug();
 			//底辺が接触したとき
 			if (it.first.a == player.body().id()
 				and it.second.normal() == Vec2(0, 1))
@@ -138,7 +142,7 @@ void Game::update()
 					}
 				}
 			}
-			
+
 			//右辺が接触したとき
 			if (it.first.a == player.body().id()
 				and it.second.normal() == Vec2(1, 0)
@@ -256,8 +260,8 @@ void Game::update()
 				}
 				else if ((it.first.a == enemy.GetBody().id() or
 							it.first.b == enemy.GetBody().id())
-						 and (it.second.normal() == Vec2(1,0) or
-								it.second.normal() == Vec2(-1,0)) )
+						 and (it.second.normal() == Vec2(1, 0) or
+							 it.second.normal() == Vec2(-1, 0)))
 				{
 					enemy.ToggleIsLookAtRight();
 				}
@@ -271,10 +275,16 @@ void Game::update()
 				}
 				else if ((it.first.a == enemy.GetBody().id() or
 					it.first.b == enemy.GetBody().id())
-						 and (it.second.normal() == Vec2(1, 0) or
-							 it.second.normal() == Vec2(-1, 0)))
+						 and (it.second.normal() == Vec2(0, 1) or
+							 it.second.normal() == Vec2(0, -1)))
 				{
 					enemy.ToggleIsLookAtDown();
+					enemy.turnWatch().restart();
+				}
+				if (enemy.GetTurnWatch().ms() > 3000)
+				{
+					enemy.ToggleIsLookAtDown();
+					enemy.turnWatch().restart();
 				}
 			}
 			for (auto&& enemy : cannonEnemys)
@@ -282,15 +292,19 @@ void Game::update()
 				//こいつは反転しない
 				if (it.first.a == enemy.GetBody().id())
 				{
-
 				}
 			}
-
-
+			for (auto&& enemy : bulletEnemys)
+			{
+				//プレイヤーと接触したとき飛翔体が消滅する
+				if (it.first.a == player.GetBody().id()
+					and it.first.b == enemy.GetBody().id())
+				{
+					enemy.body().release();
+				}
+			}
 		}
 	}
-
-	
 
 	ControlPlayer();
 
@@ -324,12 +338,17 @@ void Game::draw() const
 	{
 		enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
 	}
+
+	for (const auto& enemy : bulletEnemys)
+	{
+		enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
+	}
+
 	for (const auto& chip : chips)
 	{
 		chip.draw(HSV{ chip.id() * 10.0 });
 		int id = chip.id();
-		PutText(String(ToString(id)), chip.getPos() + Vec2(CHIP_SIZE / 2,CHIP_SIZE / 2));
-
+		PutText(String(ToString(id)), chip.getPos() + Vec2(CHIP_SIZE / 2, CHIP_SIZE / 2));
 	}
 }
 
@@ -408,8 +427,13 @@ void Game::ControlPlayer()
 	if (KeyS.pressed())
 	{
 		player.landingDelay().reset();
-		player.body().setDamping(0.99);
+		player.body().setDamping(0.95);
 	}
+	/*if (KeyS.pressed()
+		and (KeyA.pressed() or KeyD.pressed()))
+	{
+		player.body().setDamping(0.3);
+	}*/
 	if (KeyS.up())
 	{
 		player.body().setDamping(0.1);
@@ -457,7 +481,6 @@ void Game::ControlEnemys()
 		clampVel.x = Clamp(enemy.body().getVelocity().x, -100.0, 100.0);
 		clampVel.y = Clamp(enemy.body().getVelocity().y, -10000.0, 10000.0);
 		enemy.body().setVelocity(clampVel);
-
 	}
 
 	for (auto&& enemy : flyingEnemys)
@@ -471,9 +494,27 @@ void Game::ControlEnemys()
 			enemy.body().applyForce(Vec2(0, -50000 * Scene::DeltaTime()));
 		}
 		Vec2 clampVel{};
-		clampVel.x = Clamp(enemy.body().getVelocity().x, -200.0, 200.0);
+		clampVel.x = 0;
 		clampVel.y = Clamp(enemy.body().getVelocity().y, -200.0, 200.0);
 		enemy.body().setVelocity(clampVel);
+	}
+	for (auto&& enemy : cannonEnemys)
+	{
+		if (enemy.GetShotInterval().ms() > 3000)
+		{
+			BulletEnemy bullet = BulletEnemy(world.createCircleSensor(P2Dynamic, enemy.GetBody().getPos() + Vec2(0, CHIP_SIZE / 2), 10)
+										, Vec2(-100, 0));
+			bullet.body().setGravityScale(0);
+			bulletEnemys << bullet;
+			enemy.shotInterval().restart();
+		}
+
+	}
+	for (auto&& bullet : bulletEnemys)
+	{
+		//固定値で動かす
+		bullet.body().moveBy(bullet.GetVelocity() * Scene::DeltaTime());
+
 	}
 	for (auto&& coin : coins)
 	{
@@ -485,5 +526,20 @@ void Game::ControlEnemys()
 				coin.release();
 			}
 		}
+	}
+}
+
+void Game::FirePakkun_oldCannonEnemy()
+{
+	for (auto&& enemy : cannonEnemys)
+	{
+		if (enemy.GetShotInterval().ms() > 3000)
+		{
+			bulletEnemys << BulletEnemy(world.createCircleSensor(P2Kinematic, enemy.GetBody().getPos(), 10),
+										Normalize((player.GetBody().getPos() + Vec2(CHIP_SIZE / 2, CHIP_SIZE)) - enemy.GetBody().getPos()) * 5);
+
+			enemy.shotInterval().restart();
+		}
+
 	}
 }

@@ -104,9 +104,12 @@ public:
 	{}
 	const bool& GetIsLookAtDown()const { return m_isLookAtDown; }
 	void ToggleIsLookAtDown() { m_isLookAtDown = not m_isLookAtDown; }
-
+	const Stopwatch& GetTurnWatch()const { return m_turnWatch; }
+	Stopwatch& turnWatch() { return m_turnWatch; }
+	
 private:
 	bool m_isLookAtDown = true;
+	Stopwatch m_turnWatch{ StartImmediately::Yes };
 };
 
 class CannonEnemy : public Enemy
@@ -115,8 +118,24 @@ public:
 	CannonEnemy(P2Body b)
 		:Enemy(b)
 	{}
-private:
+	Stopwatch& shotInterval() { return m_shotInterval; }
+	const Stopwatch& GetShotInterval()const { return m_shotInterval; }
 
+private:
+	Stopwatch m_shotInterval{ StartImmediately::Yes };
+};
+
+class BulletEnemy : public Enemy
+{
+public:
+	BulletEnemy(P2Body b,Vec2 v)
+		:Enemy(b)
+		,m_velocity(v)
+	{}
+	const Vec2& GetVelocity()const { return m_velocity; }
+	void SetVelocity(Vec2 v) { m_velocity = v; }
+private:
+	Vec2 m_velocity;
 };
 
 struct KilledEnemy
@@ -147,12 +166,13 @@ private:
 	Array<WalkingEnemy> walkingEnemys;
 	Array<FlyingEnemy> flyingEnemys;
 	Array<CannonEnemy> cannonEnemys;
+	Array<BulletEnemy> bulletEnemys;
 	Grid<int8> enemyData =
 	{
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -173,4 +193,7 @@ private:
 	Player player;
 	void ControlPlayer();
 	void ControlEnemys();
+	[[maybe_unused]]
+	void FirePakkun_oldCannonEnemy();
+	
 };
