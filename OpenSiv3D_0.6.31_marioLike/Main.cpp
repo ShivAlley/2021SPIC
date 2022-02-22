@@ -5,6 +5,7 @@
 # include "Title.h"
 # include "Game.h"
 # include "Menu.h"
+# include "Gameover.h"
 
 void Main()
 {
@@ -19,6 +20,7 @@ void Main()
 	manager.add<Title>(GameState::Title);
 	manager.add<Game>(GameState::Game);
 	manager.add<Menu>(GameState::Menu);
+	manager.add<Gameover>(GameState::Gameover);
 
 	// ゲームシーンから開始
 	manager.init(GameState::Game);

@@ -7,6 +7,7 @@ enum class GameState
 	Title,
 	Menu,
 	Game,
+	Gameover,
 };
 
 struct ShareGameData
