@@ -7,8 +7,6 @@ Game::Game(const InitData& init) : IScene(init)
 	//visitor.inspector[Accessor::first] = [&]() {return foo(); };
 	//std::visit(visitor, visitor.inspector.at(visitor.stateMachine.front()));
 	player.body() = world.createRect(P2Dynamic, Vec2(0, -100), RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
-	//weight = world.createRect(P2Dynamic, Vec2(-200, -1000),RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0,0,1.0,100.0));
-	//weight.setSleepEnabled(false);
 	player.body().setDamping(0.1);
 	player.body().setFixedRotation(true);
 	for (auto p : step(Size(enemyData.width(), enemyData.height()))) {
@@ -24,8 +22,6 @@ Game::Game(const InitData& init) : IScene(init)
 			cannonEnemys << CannonEnemy(world.createRect(P2Kinematic, Vec2{ p.x * CHIP_SIZE - 1280 / 2,p.y * CHIP_SIZE - 720 / 2 }, RectF(CHIP_SIZE), P2Material()));
 	}
 	const CSV mapData(U"example/csv/sample.csv");
-	//mapData.columns(1);
-	//mapData.rows();
 	map.resize(mapData.columns(1), mapData.rows());
 	for (auto y : step(mapData.rows()))
 	{
@@ -84,11 +80,10 @@ void Game::update()
 {
 	for (ACCUMULATOR_SEC += Scene::DeltaTime(); STEP_SEC <= ACCUMULATOR_SEC; ACCUMULATOR_SEC -= STEP_SEC)
 	{
-		//auto& it = world.getCollisions();
 		world.update(STEP_SEC);
 		for (auto& it : world.getCollisions())
 		{
-			//PrintDebug();
+			PrintDebug();
 			//底辺が接触したとき
 			if (it.first.a == player.body().id()
 				and it.second.normal() == Vec2(0, 1))
@@ -429,11 +424,6 @@ void Game::ControlPlayer()
 		player.landingDelay().reset();
 		player.body().setDamping(0.95);
 	}
-	/*if (KeyS.pressed()
-		and (KeyA.pressed() or KeyD.pressed()))
-	{
-		player.body().setDamping(0.3);
-	}*/
 	if (KeyS.up())
 	{
 		player.body().setDamping(0.1);

@@ -94,6 +94,7 @@ public:
 	void ToggleIsLookAtRight() { m_isLookAtRight = not m_isLookAtRight; }
 private:
 	bool m_isLookAtRight = true;
+
 };
 
 class FlyingEnemy : public Enemy
@@ -195,5 +196,22 @@ private:
 	void ControlEnemys();
 	[[maybe_unused]]
 	void FirePakkun_oldCannonEnemy();
+	bool InputLeftDirection()
+	{
+		return (KeyA.pressed() or KeyLeft.pressed())
+				or (KeyA.down() or KeyLeft.down());
+	}
+	bool InputRightDirection()
+	{
+		return (KeyD.pressed() or KeyRight.pressed())
+			or (KeyD.down() or KeyRight.down());
+
+	}
+	bool InputDownDirection()
+	{
+		return (KeyS.pressed() or KeyDown.pressed())
+			or (KeyS.down() or KeyDown.down());
+
+	}
 	
 };
