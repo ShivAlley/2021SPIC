@@ -13,6 +13,7 @@ enum class GameState
 struct ShareGameData
 {
 	int dummy;
+	int32 Life{3};
 };
 
 using App = SceneManager<GameState, ShareGameData>;

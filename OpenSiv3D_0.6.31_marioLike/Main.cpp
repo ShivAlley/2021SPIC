@@ -17,6 +17,9 @@ void Main()
 	//TextureAsset::Register(U"dummyPlayer", U"Image/player.png",TextureDesc::Mipped);
 	//TextureAsset::Register(U"dummychip", U"Image/sample.png");
 	TextureAsset::Register(U"player", U"Image/costomPlayer.png",TextureDesc::Mipped);
+	TextureAsset::Register(U"terrain", U"Image/map.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"coin", U"Image/jewel.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"bullet", U"Image/bullet.png", TextureDesc::Mipped);
 	App manager;
 	manager.add<Title>(GameState::Title);
 	manager.add<Game>(GameState::Game);

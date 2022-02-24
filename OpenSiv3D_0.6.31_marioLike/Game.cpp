@@ -4,6 +4,12 @@
 
 Game::Game(const InitData& init) : IScene(init)
 {
+	const CSV terrData(U"example/csv/sample.csv");
+	//const CSV terrData(U"Stage/Stage1_地形.csv");
+	const CSV coinData(U"Stage/Stage1_コイン.csv");
+	const CSV enemyData(U"Stage/Stage1_敵.csv");
+	const CSV backData(U"Stage/Stage1_背景.csv");
+	const CSV arrowData(U"Stage/Stage1_矢印.csv");
 	//visitor.inspector[Accessor::first] = [&]() {return foo(); };
 	//std::visit(visitor, visitor.inspector.at(visitor.stateMachine.front()));
 	//TopLeftをずらして指定して描画の時に地に足がつくようにする
@@ -11,42 +17,43 @@ Game::Game(const InitData& init) : IScene(init)
 	player.body() = world.createRect(P2Dynamic, Vec2(500, -100), RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
 	player.body().setDamping(0.1);
 	player.body().setFixedRotation(true);
-	for (auto p : step(Size(enemyData.width(), enemyData.height()))) {
-		if (enemyData[p.y][p.x] == 1)
-			coins << world.createCircleSensor(P2Kinematic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, 10);
-		//TODO:仮のコイン
-	}
-	for (auto p : step(Size(enemyData.width(), enemyData.height()))) {
-		if (enemyData[p.y][p.x] == 1)
-			walkingEnemys << WalkingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material(10.0, 0.1, 0.0, 1.0)));
-		if (enemyData[p.y][p.x] == 2)
-			flyingEnemys << FlyingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material()));
-		if (enemyData[p.y][p.x] == 3)
-			cannonEnemys << CannonEnemy(world.createRect(P2Kinematic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material()));
-	}
-	const CSV mapData(U"example/csv/sample.csv");
-	map.resize(mapData.columns(1), mapData.rows());
-	for (auto y : step(mapData.rows()))
+TERRAIN_:
+	terrain.resize(terrData.columns(1), terrData.rows());
+	for (auto y : step(terrData.rows()))
 	{
-		for (auto x : step(mapData.columns(1)))
+		for (auto x : step(terrData.columns(1)))
 		{
-			int tile = GetTile(mapData, mapData.rows(), x, y);
-			map[y][x] = tile;
+			int tile = GetTile(terrData, terrData.rows(), x, y);
+			terrain[y][x] = tile;
 		}
 	}
-	
+COIN_:
+	for (auto p : step(Size(enemyDatas.width(), enemyDatas.height()))) {
+		if (enemyDatas[p.y][p.x] == 1)
+			coins << world.createCircleSensor(P2Kinematic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE } + Vec2{ CHIP_SIZE / 2,CHIP_SIZE / 2 }, 10);
+		//TODO:仮のコイン
+	}
+	for (auto p : step(Size(enemyDatas.width(), enemyDatas.height()))) {
+		if (enemyDatas[p.y][p.x] == 1)
+			walkingEnemys << WalkingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE }, RectF(CHIP_SIZE), P2Material(10.0, 0.1, 0.0, 1.0)));
+		if (enemyDatas[p.y][p.x] == 2)
+			flyingEnemys << FlyingEnemy(world.createRect(P2Dynamic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE }, RectF(CHIP_SIZE), P2Material()));
+		if (enemyDatas[p.y][p.x] == 3)
+			cannonEnemys << CannonEnemy(world.createRect(P2Kinematic, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE }, RectF(CHIP_SIZE), P2Material()));
+	}
+
 	//HACK: スライムブロックはPreviousVelocityを小さくすれば実装出来るかも？
 	//ブロックの取得は敢えてMaterialsで密度を大きくしてGetMassで極端に重い物体を検知するとたぶん出来る
-	Size size = { mapData.columns(1), mapData.rows() };//マップの大きさ｛ｘ、ｙ｝
-	for (auto p : step(size)) {
-		if (map[p.y][p.x] == 1)
-			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
-		if (map[p.y][p.x] == 2)
-			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
-		if (map[p.y][p.x] == 3)
-			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
-		if (map[p.y][p.x] == 4)
-			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
+	terrainSize = { terrData.columns(1), terrData.rows() };//マップの大きさ｛ｘ、ｙ｝
+	for (auto p : step(terrainSize)) {
+		if (terrain[p.y][p.x] == 1)
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE }, RectF(CHIP_SIZE), P2Material());
+		if (terrain[p.y][p.x] == 2)
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE }, RectF(CHIP_SIZE), P2Material());
+		if (terrain[p.y][p.x] == 3)
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE }, RectF(CHIP_SIZE), P2Material());
+		if (terrain[p.y][p.x] == 4)
+			chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE }, RectF(CHIP_SIZE), P2Material());
 	}
 
 	for (auto&& enemy : walkingEnemys)
@@ -54,8 +61,8 @@ Game::Game(const InitData& init) : IScene(init)
 		enemy.body().setFixedRotation(true);
 		//enemy.body().addTriangle(Triangle{ CHIP_SIZE / 2, CHIP_SIZE, 20 ,180_deg }, P2Material(0.1, 0.1, 0.0, 1.0));
 		enemy.body().addCircle(Circle{ Arg::center(CHIP_SIZE / 2,CHIP_SIZE), 10 }, P2Material(0.1, 0.1, 0.0, 1.0));
-		enemy.body().addTriangle(Triangle{ 0,CHIP_SIZE / 2,40,270_deg }, P2Material(0.1, 0.1, 0.0, 1.0));
-		enemy.body().addTriangle(Triangle{ CHIP_SIZE,CHIP_SIZE / 2,40,90_deg }, P2Material(0.1, 0.1, 0.0, 1.0));
+		enemy.body().addTriangle(Triangle{ 0 + 10,CHIP_SIZE / 2,40,270_deg }, P2Material(0.1, 0.1, 0.0, 1.0));
+		enemy.body().addTriangle(Triangle{ CHIP_SIZE - 10,CHIP_SIZE / 2,40,90_deg }, P2Material(0.1, 0.1, 0.0, 1.0));
 		//enemy.body().addCircleSensor(Circle{ Arg::center(-4,CHIP_SIZE + 10),5 });
 		//enemy.body().addCircleSensor(Circle{ Arg::center(CHIP_SIZE + 4,CHIP_SIZE + 10),5 });
 		//enemy.body().addCircle(Circle{ Arg::center(0, CHIP_SIZE / 2), 10 }, P2Material(0.1, 0.1, 0.0, 1.0));
@@ -65,8 +72,8 @@ Game::Game(const InitData& init) : IScene(init)
 	{
 		enemy.body().setFixedRotation(true);
 		enemy.body().setGravityScale(0);
-		enemy.body().addTriangle(Triangle{ CHIP_SIZE / 2,0,40, }, P2Material(1.0, 0.1, 0.0, 1.0));
-		enemy.body().addTriangle(Triangle{ CHIP_SIZE / 2,CHIP_SIZE,40,180_deg }, P2Material(1.0, 0.1, 0.0, 1.0));
+		enemy.body().addTriangle(Triangle{ CHIP_SIZE / 2,0 + 10,40, }, P2Material(1.0, 0.1, 0.0, 1.0));
+		enemy.body().addTriangle(Triangle{ CHIP_SIZE / 2,CHIP_SIZE - 10,40,180_deg }, P2Material(1.0, 0.1, 0.0, 1.0));
 	}
 	for (auto&& enemy : cannonEnemys)
 	{
@@ -123,8 +130,7 @@ void Game::update()
 					}
 				}
 			}
-			
-			
+
 			//右辺が接触したとき
 			if (it.first.a == player.body().id()
 				and it.second.normal() == Vec2(1, 0)
@@ -165,7 +171,6 @@ void Game::update()
 						and it.first.b == enemy.GetBody().id())
 					{
 						ResponsePlayerRightHit();
-
 					}
 				}
 			}
@@ -199,7 +204,6 @@ void Game::update()
 						and it.first.b == enemy.GetBody().id())
 					{
 						ResponsePlayerLeftHit();
-
 					}
 				}
 				for (auto&& enemy : flyingEnemys)
@@ -208,7 +212,6 @@ void Game::update()
 						and it.first.b == enemy.GetBody().id())
 					{
 						ResponsePlayerLeftHit();
-
 					}
 				}
 			}
@@ -246,12 +249,10 @@ void Game::update()
 						if (player.GetBody().getPos().x + CHIP_SIZE / 2 > enemy.GetBody().getPos().x + CHIP_SIZE / 2)
 						{
 							ResponsePlayerRightHit();
-
 						}
 						else //左だったら逆
 						{
 							ResponsePlayerLeftHit();
-
 						}
 					}
 				}
@@ -265,7 +266,7 @@ void Game::update()
 					//プレイヤーと接触したときはなにもしない
 				}
 				else if ((it.first.a == enemy.GetBody().id() or
-						it.first.b == enemy.GetBody().id())
+					it.first.b == enemy.GetBody().id())
 						 and (it.second.normal() == Vec2(1, 0) or
 							 it.second.normal() == Vec2(-1, 0))
 						and enemy.turnCooldown().ms() > 100)
@@ -276,9 +277,10 @@ void Game::update()
 				//マップデータを参照して何もない空間を検知すると反転する
 				//高速回転バグの対策として反転にはクールタイムを用意している
 				//原始的な対策であるため外れ値には対応できない
-				Vector2D<int32> vec = enemy.GetBody().getPos() + Vector2D<int32>(0,CHIP_SIZE + CHIP_SIZE / 2);
-				if (map[vec.y / CHIP_SIZE][vec.x / CHIP_SIZE] == 0
-					and enemy.turnCooldown().ms() > 500)
+				Vector2D<int32> vec = enemy.GetBody().getPos() + Vector2D<int32>(0, CHIP_SIZE + CHIP_SIZE / 2);
+
+				if (terrain[vec.y / CHIP_SIZE][vec.x / CHIP_SIZE] == 0
+				and enemy.turnCooldown().ms() > 500)
 				{
 					enemy.ToggleIsLookAtRight();
 					enemy.turnCooldown().restart();
@@ -304,7 +306,6 @@ void Game::update()
 					enemy.ToggleIsLookAtDown();
 					enemy.turnWatch().restart();
 				}
-				
 			}
 			for (auto&& enemy : cannonEnemys)
 			{
@@ -329,7 +330,6 @@ void Game::update()
 					player.SetIsInvincible(true);
 					player.invincibleTimer().start();
 					player.DecreaseHealth();
-
 				}
 			}
 		}
@@ -343,6 +343,23 @@ void Game::update()
 		player.invincibleTimer().reset();
 		player.body().setVelocity(Vec2(0, 0));
 	}
+
+	if (player.GetCoinCount() >= 100)
+	{
+		player.ResetCoin();
+		getData().Life++;
+	}
+
+	if (player.GetHealth() <= 0)
+	{
+		changeScene(GameState::Game);
+		getData().Life--;
+	}
+	if (getData().Life <= 0)
+	{
+		changeScene(GameState::Gameover);
+	}
+	
 
 	if (not player.GetIsInvincible())
 	{
@@ -364,13 +381,24 @@ void Game::draw() const
 	//TextureAsset(U"sampleBack").scaled(1.5,1.5).draw();
 	const auto transf = camera.createTransformer();
 	player.GetBody().draw();
+	for (auto p : step(terrainSize)) {
+		//chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
+		if (terrain[p.y][p.x] == 1)
+			TextureAsset(U"terrain")(0, 0, Size(256, 512)).scaled(0.25, 0.25).draw(Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE });
+		if (terrain[p.y][p.x] == 2)
+			TextureAsset(U"terrain")(0, 512, Size(256, 512)).scaled(0.25, 0.25).draw(Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE });
+		if (terrain[p.y][p.x] == 3)
+			TextureAsset(U"terrain")(0, 512 * 2, Size(256, 512)).scaled(0.25, 0.25).draw(Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE });
+		if (terrain[p.y][p.x] == 4)
+			TextureAsset(U"terrain")(0, 512 * 3, Size(256, 512)).scaled(0.25, 0.25).draw(Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE });
+	}
 	/*TextureAsset(U"dummyPlayer")
 		.scaled(0.5, 0.5)
 		.draw(player.GetBody().getPos());*/
 	uint64 t = player.anime.animeTimer.ms64();
 	switch (int32 n; player.anime.animeState)
 	{
-	{
+		{
 	case 0:
 		//n=(t/1コマあたりの時間％コマの枚数)
 		n = (t / 80 % 3);
@@ -387,7 +415,7 @@ void Game::draw() const
 				player.anime.animeState * 256,//y
 				256)//Rect(256)
 			.scaled(Vec2{ 0.6,0.6 })
-			.draw(player.GetBody().getPos() + Vec2{-CHIP_SIZE*0.6,-CHIP_SIZE /2*0.6});
+			.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
 		break;
 	case 1:
 		//n=(t/1コマあたりの時間％コマの枚数)
@@ -429,9 +457,9 @@ void Game::draw() const
 					player.anime.animeState * 256,//y
 					256)//Rect(256)
 				.scaled(Vec2{ 0.6,0.6 })
-				.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
+				.draw(player.GetBody().getPos() + Vec2{ 0,-CHIP_SIZE / 2 * 0.6 });
 		}
-		if((KeyD.pressed() or KeyRight.pressed()))
+		if ((KeyD.pressed() or KeyRight.pressed()))
 		{
 			TextureAsset(U"player")
 				((player.anime.attachWall[0]) * 256,//x
@@ -439,7 +467,7 @@ void Game::draw() const
 					256)//Rect(256)
 				.scaled(Vec2{ 0.6,0.6 })
 				.mirrored()
-				.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
+				.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE - CHIP_SIZE / 2 + 5,-CHIP_SIZE / 2 * 0.6 });
 		}
 		break;
 	case 4:
@@ -460,7 +488,6 @@ void Game::draw() const
 			.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
 		if (t / 200 % 2)//200ms周期
 		{
-
 			ScopedColorAdd2D color{ 1.0,1.0,0.1,0 };
 			TextureAsset(U"player")
 				((player.anime.damaged[0]) * 256,//x
@@ -469,24 +496,24 @@ void Game::draw() const
 				.scaled(Vec2{ 0.6,0.6 })
 				.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
 		}
-		
+
 		break;
-	}
+		}
 	default:
-	break;
+		break;
 	}
 	/*TextureAsset(U"player")
 		((animePatterns[n]) * 256, (y * 0), 256)
 		.scaled(Vec2{0.6,0.6})
 		.draw(player.GetBody().getPos());*/
-	for (const auto& chip : coins)
+	for (const auto& coin : coins)
 	{
-		chip.draw(HSV{ chip.id() * 10.0 });
+		coin.draw(HSV{ coin.id() * 10.0 });
+		TextureAsset(U"coin").scaled(0.5, 0.5).drawAt(Vec2(coin.getPos()));
 	}
 	for (const auto& enemy : walkingEnemys)
 	{
 		enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
-
 	}
 	for (const auto& enemy : flyingEnemys)
 	{
@@ -500,11 +527,19 @@ void Game::draw() const
 	for (const auto& enemy : bulletEnemys)
 	{
 		enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
+		if (enemy.GetVelocity().x > 0)
+		{
+			TextureAsset(U"bullet").drawAt(enemy.GetBody().getPos());
+		}
+		else
+		{
+			TextureAsset(U"bullet").mirrored().drawAt(enemy.GetBody().getPos());
+		}
 	}
 
 	for (const auto& chip : chips)
 	{
-		chip.draw(HSV{ chip.id() * 10.0 });
+		//chip.draw(HSV{ chip.id() * 10.0 });
 		int id = chip.id();
 		PutText(String(ToString(id)), chip.getPos() + Vec2(CHIP_SIZE / 2, CHIP_SIZE / 2));
 	}
@@ -524,8 +559,6 @@ void Game::PrintDebug()
 
 void Game::ControlPlayer()
 {
-	
-
 	if (player.landingDelay().ms() > 500)
 	{
 		if (isInputLeftDirection()
@@ -545,7 +578,7 @@ void Game::ControlPlayer()
 		player.SetIsJumpRestriction(true);
 		player.body().setGravityScale(1);
 	}
-	
+
 	if (KeySpace.up())
 	{
 		player.SetIsJumpRestriction(false);
@@ -683,7 +716,6 @@ void Game::ResponsePlayerBottomHit()
 	}
 }
 
-
 void Game::ControlEnemys()
 {
 	for (auto&& enemy : walkingEnemys)
@@ -743,7 +775,6 @@ void Game::ControlEnemys()
 				enemy.shotInterval().restart();
 			}
 		}
-
 	}
 	for (auto&& bullet : bulletEnemys)
 	{
@@ -765,6 +796,7 @@ void Game::ControlEnemys()
 				and it.first.b == coin.id())
 			{
 				coin.release();
+				player.AddCoin();
 			}
 		}
 	}
@@ -782,6 +814,5 @@ void Game::FirePakkun_oldCannonEnemy()
 
 			enemy.shotInterval().restart();
 		}
-
 	}
 }

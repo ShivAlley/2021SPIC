@@ -7,9 +7,6 @@ concept vec2D = requires (T & x) {
 	x.y;
 };
 
-constexpr int32 animePatterns[] = {
-		0,1,2,3,4,5,6,7,8,9,
-};
 
 
 
@@ -95,9 +92,14 @@ public:
 	void SetIsInvincible(bool b) { m_isInvincible = b; }
 	const int32& GetHealth()const { return m_health; }
 	void DecreaseHealth() { m_health--; }
-	void IncreaseHealth() { m_health++; }
+	//const int32& GetLife()const { return m_life; }
+	//void DecreaseLife() { m_life--; }
+	//void IncreaseLife() { m_life++; }
 	const bool& GetIsAttachWall()const { return m_isAttachWall; }
 	void SetIsAttachWall(bool b) { m_isAttachWall = b; }
+	const int32& GetCoinCount()const { return m_coinCount; }
+	void AddCoin() { m_coinCount++; }
+	void ResetCoin() { m_coinCount = 0; }
 	//次からはちゃんとカプセル化しましょう
 	AnimePlayer anime;
 private:
@@ -106,7 +108,9 @@ private:
 	Stopwatch m_landingDelay{ StartImmediately::No };
 	Stopwatch m_invincibleTimer{ StartImmediately::No };
 	Vec2 m_previousVelocity{};
-	int32 m_health{3};
+	int32 m_health{5};
+	//int32 m_life{3};
+	int32 m_coinCount;
 	bool m_shouldRecordVelocity = true;
 	bool m_isJumpRestriction = false;
 	bool m_isOnGround = false;
@@ -220,13 +224,14 @@ private:
 	Visitor<void(void)> visitor;
 	P2World world{ GRAVITY };
 	Array<P2Body> chips;
+	Size terrainSize{};
 	Array<P2Body> coins;
 	//Array<P2Body> walkingEnemys;
 	Array<WalkingEnemy> walkingEnemys;
 	Array<FlyingEnemy> flyingEnemys;
 	Array<CannonEnemy> cannonEnemys;
 	Array<BulletEnemy> bulletEnemys;
-	Grid<int8> enemyData =
+	Grid<int8> enemyDatas =
 	{
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -245,7 +250,7 @@ private:
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 	};
 
-	Grid<int8> map;
+	Grid<int8> terrain;
 
 	Camera2D camera{ Vec2{ 0, 0 } };
 
