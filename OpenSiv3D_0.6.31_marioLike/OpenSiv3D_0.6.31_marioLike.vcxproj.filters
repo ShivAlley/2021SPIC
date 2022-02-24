@@ -159,6 +159,9 @@
     <ClCompile Include="LoadCSV.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Gameover.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
@@ -807,6 +810,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LoadCSV.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameover.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

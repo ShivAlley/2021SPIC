@@ -80,7 +80,7 @@ void Game::update()
 {
 	for (ACCUMULATOR_SEC += Scene::DeltaTime(); STEP_SEC <= ACCUMULATOR_SEC; ACCUMULATOR_SEC -= STEP_SEC)
 	{
-		PrintDebug();
+		//PrintDebug();
 		world.update(STEP_SEC);
 		for (auto&& it : world.getCollisions())
 		{
@@ -100,6 +100,7 @@ void Game::update()
 				player.body().setVelocity(Vec2(0, 0));
 				player.body().setGravityScale(0);
 				player.SetIsOnGround(true);
+				player.SetIsAttachWall(false);
 				for (auto&& enemy : walkingEnemys)
 				{
 					if (it.first.a == player.body().id()
@@ -122,23 +123,19 @@ void Game::update()
 					}
 				}
 			}
-			//無敵時間が３秒超えたらリセット
-			if (player.invincibleTimer().ms() > 3000)
-			{
-				player.SetIsInvincible(false);
-				
-				player.invincibleTimer().reset();
-			}
+			
 			
 			//右辺が接触したとき
 			if (it.first.a == player.body().id()
 				and it.second.normal() == Vec2(1, 0)
 				and isInputRightDirection()
-				and not player.GetIsInvinvible())
+				and not player.GetIsInvincible())
 			{
+				player.SetIsAttachWall(true);
 				player.body().setVelocity(Vec2(0, 0));
 				if (KeySpace.down())
 				{
+					player.SetIsAttachWall(false);
 					player.body().applyLinearImpulse(Vec2(-player.GetParam().wallKickPower.x, player.GetParam().wallKickPower.y));
 				}
 			}
@@ -147,6 +144,7 @@ void Game::update()
 				and it.second.normal() == Vec2(1, 0)
 				and (KeyD.up() or KeyRight.up()))
 			{
+				player.SetIsAttachWall(false);
 				player.body().applyLinearImpulse(Vec2(-10, 0));
 			}
 
@@ -175,11 +173,13 @@ void Game::update()
 			if (it.first.a == player.body().id()
 				and it.second.normal() == Vec2(-1, 0)
 				and isInputLeftDirection()
-				and not player.GetIsInvinvible())
+				and not player.GetIsInvincible())
 			{
+				player.SetIsAttachWall(true);
 				player.body().setVelocity(Vec2(0, 0));
 				if (KeySpace.down())
 				{
+					player.SetIsAttachWall(false);
 					player.body().applyLinearImpulse(player.GetParam().wallKickPower);
 				}
 			}
@@ -187,6 +187,7 @@ void Game::update()
 				and it.second.normal() == Vec2(-1, 0)
 				and (KeyA.up() or KeyLeft.up()))
 			{
+				player.SetIsAttachWall(false);
 				player.body().applyLinearImpulse(Vec2(10, 0));
 			}
 			if (it.first.a == player.body().id()
@@ -214,7 +215,7 @@ void Game::update()
 			//上辺が接触したとき
 			if (it.first.a == player.body().id()
 				and it.second.normal() == Vec2(0, -1)
-				and not player.GetIsInvinvible())
+				and not player.GetIsInvincible())
 			{
 				for (auto&& enemy : walkingEnemys)
 				{
@@ -302,7 +303,6 @@ void Game::update()
 				{
 					enemy.ToggleIsLookAtDown();
 					enemy.turnWatch().restart();
-					
 				}
 				
 			}
@@ -325,6 +325,7 @@ void Game::update()
 					and it.first.b == enemy.GetBody().id())
 				{
 					enemy.body().release();
+
 					player.SetIsInvincible(true);
 					player.invincibleTimer().start();
 					player.DecreaseHealth();
@@ -334,7 +335,19 @@ void Game::update()
 		}
 	}
 
-	ControlPlayer();
+	//無敵時間が2秒超えたらリセット
+	if (player.invincibleTimer().ms() > 2000)
+	{
+		player.SetIsInvincible(false);
+
+		player.invincibleTimer().reset();
+		player.body().setVelocity(Vec2(0, 0));
+	}
+
+	if (not player.GetIsInvincible())
+	{
+		ControlPlayer();
+	}
 
 	ControlEnemys();
 
@@ -343,15 +356,128 @@ void Game::update()
 	//スクロールの制限をいい感じにする　後ろの/2だけ調整するかも
 	Center.y = Clamp(Center.y, Scene::CenterF().y, static_cast<double>(CHIP_SIZE * 32) - Scene::CenterF().y / 2);
 	camera.setCenter(Center);
+	animeUpdate();
 }
 
 void Game::draw() const
 {
 	//TextureAsset(U"sampleBack").scaled(1.5,1.5).draw();
-	const auto t = camera.createTransformer();
+	const auto transf = camera.createTransformer();
 	player.GetBody().draw();
 	/*TextureAsset(U"dummyPlayer")
 		.scaled(0.5, 0.5)
+		.draw(player.GetBody().getPos());*/
+	uint64 t = player.anime.animeTimer.ms64();
+	switch (int32 n; player.anime.animeState)
+	{
+	{
+	case 0:
+		//n=(t/1コマあたりの時間％コマの枚数)
+		n = (t / 80 % 3);
+		//ループさせたくないときは
+		//n=(t/1コマあたりの時間/コマの枚数)
+		//if(t > 一コマあたりの時間*コマの枚数)
+		//n = コマの枚数 - 1
+		if (t > 80 * 3)
+			n = 2;
+		//描画と当たり判定のズレは
+		//+Vec2{-CHIP_SIZE*描画スケールｘ,-CHIP_SIZE / 2 * 描画スケールｙ}
+		TextureAsset(U"player")
+			((player.anime.shrinkSpring[n]) * 256,//x
+				player.anime.animeState * 256,//y
+				256)//Rect(256)
+			.scaled(Vec2{ 0.6,0.6 })
+			.draw(player.GetBody().getPos() + Vec2{-CHIP_SIZE*0.6,-CHIP_SIZE /2*0.6});
+		break;
+	case 1:
+		//n=(t/1コマあたりの時間％コマの枚数)
+		n = (t / 500 % 3);
+		//n=(t/1コマあたりの時間/コマの枚数)
+		//ループさせたくないときは
+		//if(t > 一コマあたりの時間*コマの枚数)
+		//n = コマの枚数 - 1
+		if (t > 500 * 3)
+			n = 2;
+		TextureAsset(U"player")
+			((player.anime.extendSpring[n]) * 256,//x
+				player.anime.animeState * 256,//y
+				256)//Rect(256)
+			.scaled(Vec2{ 0.6,0.6 })
+			.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
+		break;
+	case 2:
+		//n=(t/1コマあたりの時間％コマの枚数)
+		n = (t / 1000 % 3);
+		//ループさせたくないときは
+		//n=(t/1コマあたりの時間/コマの枚数)
+		//if(t > 一コマあたりの時間*コマの枚数)
+		//n = コマの枚数 - 1
+		if (t > 1000 * 3)
+			n = 2;
+		TextureAsset(U"player")
+			((player.anime.hardShrinkSpring[n]) * 256,//x
+				player.anime.animeState * 256,//y
+				256)//Rect(256)
+			.scaled(Vec2{ 0.6,0.6 })
+			.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
+		break;
+	case 3:
+		if ((KeyA.pressed() or KeyLeft.pressed()))
+		{
+			TextureAsset(U"player")
+				((player.anime.attachWall[0]) * 256,//x
+					player.anime.animeState * 256,//y
+					256)//Rect(256)
+				.scaled(Vec2{ 0.6,0.6 })
+				.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
+		}
+		if((KeyD.pressed() or KeyRight.pressed()))
+		{
+			TextureAsset(U"player")
+				((player.anime.attachWall[0]) * 256,//x
+					player.anime.animeState * 256,//y
+					256)//Rect(256)
+				.scaled(Vec2{ 0.6,0.6 })
+				.mirrored()
+				.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
+		}
+		break;
+	case 4:
+		//n=(t/1コマあたりの時間％コマの枚数)
+		n = (t / 2000 % 2);
+		//ループさせたくないときは
+		//n=(t/1コマあたりの時間/コマの枚数)
+		//if(t > 一コマあたりの時間*コマの枚数)
+		//n = コマの枚数 - 1
+		if (t > 2000 * 2)
+			n = 1;
+		//ダメージ2枚目は分岐が面倒だったので使わない
+		TextureAsset(U"player")
+			((player.anime.damaged[0]) * 256,//x
+				player.anime.animeState * 256,//y
+				256)//Rect(256)
+			.scaled(Vec2{ 0.6,0.6 })
+			.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
+		if (t / 200 % 2)//200ms周期
+		{
+
+			ScopedColorAdd2D color{ 1.0,1.0,0.1,0 };
+			TextureAsset(U"player")
+				((player.anime.damaged[0]) * 256,//x
+					player.anime.animeState * 256,//y
+					256)//Rect(256)
+				.scaled(Vec2{ 0.6,0.6 })
+				.draw(player.GetBody().getPos() + Vec2{ -CHIP_SIZE * 0.6,-CHIP_SIZE / 2 * 0.6 });
+		}
+		
+		break;
+	}
+	default:
+	break;
+	}
+	/*TextureAsset(U"player")
+		((animePatterns[n]) * 256, (y * 0), 256)
+		.scaled(Vec2{0.6,0.6})
 		.draw(player.GetBody().getPos());*/
 	for (const auto& chip : coins)
 	{
@@ -398,7 +524,9 @@ void Game::PrintDebug()
 
 void Game::ControlPlayer()
 {
-	if (player.landingDelay().ms() > 250)
+	
+
+	if (player.landingDelay().ms() > 500)
 	{
 		if (isInputLeftDirection()
 			and player.GetPreviousVelocity().x > 0)
@@ -441,7 +569,7 @@ void Game::ControlPlayer()
 	{
 		player.landingDelay().reset();
 		player.body().setGravityScale(1);
-		player.body().applyLinearImpulse(Vec2(0, player.GetParam().jumpPower * 10));
+		player.body().applyLinearImpulse(Vec2(0, player.GetParam().jumpPower * 5));
 		//KeyS.upなのでここだけSetFalse
 		player.SetIsJumpRestriction(false);
 		player.SetIsOnGround(false);
@@ -449,7 +577,7 @@ void Game::ControlPlayer()
 		player.SetShouldRecordVelocity(true);
 	}
 	if (player.GetIsOnGround()
-		and not player.GetIsJumpRestriction())
+		and not(player.GetIsJumpRestriction()))
 	{
 		if ((KeySpace.pressed() or KeySpace.down())
 			and isInputLeftDirection())
@@ -535,7 +663,8 @@ void Game::ResponsePlayerBottomHit()
 		player.body().setVelocity(Vec2(player.GetPreviousVelocity().x, 0));
 		player.body().setGravityScale(1);
 		player.body().applyLinearImpulse(Vec2(0, -800));
-		player.SetIsJumpRestriction(true);
+		//Restrictionの挙動がおかしいのでここでFalseにする
+		player.SetIsJumpRestriction(false);
 		player.SetIsOnGround(false);
 		player.SetShouldRecordVelocity(true);
 	}
@@ -547,7 +676,8 @@ void Game::ResponsePlayerBottomHit()
 		player.body().setVelocity(Vec2(player.GetPreviousVelocity().x, 0));
 		player.body().setGravityScale(1);
 		player.body().applyLinearImpulse(Vec2(0, -300));
-		player.SetIsJumpRestriction(true);
+		//Restrictionの挙動がおかしいのでここでFalseにする
+		player.SetIsJumpRestriction(false);
 		player.SetIsOnGround(false);
 		player.SetShouldRecordVelocity(true);
 	}
@@ -593,7 +723,7 @@ void Game::ControlEnemys()
 	{
 		double diff = AbsDiff(player.GetBody().getPos().x, enemy.GetBody().getPos().x);
 
-		if (enemy.GetShotInterval().ms() > 3000
+		if (enemy.GetShotInterval().ms() > 5000
 			and diff < Scene::Width())
 		{
 			if (enemy.GetIsLookAtRight())

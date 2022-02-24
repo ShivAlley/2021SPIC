@@ -7,6 +7,42 @@ concept vec2D = requires (T & x) {
 	x.y;
 };
 
+constexpr int32 animePatterns[] = {
+		0,1,2,3,4,5,6,7,8,9,
+};
+
+
+
+struct AnimePlayer
+{
+	void aa() {
+		/*const uint64 t = Time::GetMillisec();
+		const int32 x = ((t / 2000 % 2) * 3);
+		const int32 y = (t / 4000 % 4);
+		const int32 n = (t / 250 % 4);
+
+		Rect{ ((patterns[n] + x) * 20 * 4), (y * 28 * 4), (20 * 4), (28 * 4) }
+		.draw(ColorF{ 0.3, 0.9, 0.8 });
+
+		texture.scaled(4).draw();
+
+		Rect{ 520, 60, (20 * 8 + 80), (28 * 8 + 80) }
+		.draw(ColorF{ 0.5, 0.9, 0.5 });
+
+		texture((patterns[n] + x) * 20, (y * 28), 20, 28)
+			.scaled(8).draw(560, 100);*/
+	}
+	int32 animeState = 1;//extendSpring
+	int32 shrinkSpring[3]{ 0,1,2 };
+	int32 extendSpring[3]{ 0,1,2 };
+	int32 hardShrinkSpring[3]{ 0,1,2 };
+	int32 attachWall[1]{ 0 };
+	int32 damaged[2]{ 0,1 };
+	Stopwatch animeTimer{ StartImmediately::Yes };
+	
+};
+
+
 struct Parameter
 {
 	Parameter() = default;
@@ -49,34 +85,35 @@ public:
 	Stopwatch& invincibleTimer(){ return m_invincibleTimer; }
 	const bool& GetIsJumpRestriction()const { return m_isJumpRestriction; }
 	void SetIsJumpRestriction(bool b) { m_isJumpRestriction = b; }
-	const Vec2& GetDeltaVelocity()const { return m_deltaVelocity; }
-	void SetDeltaVelocity(Vec2 v) { m_deltaVelocity = v; }
 	const Vec2& GetPreviousVelocity()const { return m_previousVelocity; }
 	void SetPreviousvelocity(Vec2 v) { m_previousVelocity = v; }
 	const bool& GetShouldRecordVelocity()const { return m_shouldRecordVelocity; }
 	void SetShouldRecordVelocity(bool b) { m_shouldRecordVelocity = b; }
 	const bool& GetIsOnGround()const { return m_isOnGround; }
 	void SetIsOnGround(bool b) { m_isOnGround = b; }
-	const bool& GetIsInvinvible()const { return m_isInvincible; }
+	const bool& GetIsInvincible()const { return m_isInvincible; }
 	void SetIsInvincible(bool b) { m_isInvincible = b; }
 	const int32& GetHealth()const { return m_health; }
 	void DecreaseHealth() { m_health--; }
 	void IncreaseHealth() { m_health++; }
-	//bool& RefShouldRecordVelocity() { return m_shouldRecordVelocity; }
+	const bool& GetIsAttachWall()const { return m_isAttachWall; }
+	void SetIsAttachWall(bool b) { m_isAttachWall = b; }
+	//次からはちゃんとカプセル化しましょう
+	AnimePlayer anime;
 private:
 	P2Body m_body;
 	Parameter m_param;
 	Stopwatch m_landingDelay{ StartImmediately::No };
 	Stopwatch m_invincibleTimer{ StartImmediately::No };
-	Vec2 m_deltaVelocity{};
 	Vec2 m_previousVelocity{};
 	int32 m_health{3};
 	bool m_shouldRecordVelocity = true;
 	bool m_isJumpRestriction = false;
 	bool m_isOnGround = false;
 	bool m_isInvincible = false;
+	bool m_isAttachWall = false;
 	static constexpr Vec2 MAX_VEL = { 1000,1000 };
-	static constexpr Vec2 ACCELERATION = { 30000,-100 };
+	static constexpr Vec2 ACCELERATION = { 30000,-200 };
 	static constexpr double FLOOR_KICK_POWER = 500;
 	static constexpr Vec2 WALL_KICK_POWER = { 500,-500 };
 	static constexpr Vec2 KNOCKBACKED_POWER = { -300,-300 };
@@ -195,10 +232,10 @@ private:
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -213,6 +250,41 @@ private:
 	Camera2D camera{ Vec2{ 0, 0 } };
 
 	Player player;
+	void animeUpdate()
+	{
+		int32 changeCheck = player.anime.animeState;
+		if (player.GetIsOnGround()
+			/*and not(isInputDownDirection())*/)
+		{
+			player.anime.animeState = 0;
+		}
+		if (not player.GetIsOnGround())
+		{
+			player.anime.animeState = 1;
+		}
+		if (isInputDownDirection())
+		{
+			player.anime.animeState = 2;
+		}
+		if (player.GetIsAttachWall())
+		{
+			player.anime.animeState = 3;
+			if (player.GetIsOnGround())
+			{
+				player.anime.animeState = 0;
+			}
+		}
+		if (player.GetIsInvincible())
+		{
+			player.anime.animeState = 4;
+		}
+
+		if (changeCheck not_eq player.anime.animeState)
+		{
+			player.anime.animeTimer.restart();
+		}
+	}
+
 	void ControlPlayer();
 	void ResponsePlayerLeftHit();
 	void ResponsePlayerRightHit();
