@@ -16,7 +16,11 @@ void Main()
 	//TextureAsset::Register(U"dummy256", U"Image/256x256.png");
 	//TextureAsset::Register(U"dummyPlayer", U"Image/player.png",TextureDesc::Mipped);
 	//TextureAsset::Register(U"dummychip", U"Image/sample.png");
+	FontAsset::Register(U"Title", 60, FileSystem::GetFolderPath(SpecialFolder::SystemFonts) + U"UDDigiKyokashoN-B.ttc");
 	TextureAsset::Register(U"player", U"Image/costomPlayer.png",TextureDesc::Mipped);
+	TextureAsset::Register(U"titleLogo", U"Image/title.png",TextureDesc::Mipped);
+	TextureAsset::Register(U"back", U"Image/back_ground.png",TextureDesc::Mipped);
+	TextureAsset::Register(U"select", U"Image/select.png",TextureDesc::Mipped);
 	App manager;
 	manager.add<Title>(GameState::Title);
 	manager.add<Game>(GameState::Game);
@@ -24,7 +28,7 @@ void Main()
 	manager.add<Gameover>(GameState::Gameover);
 
 	// ゲームシーンから開始
-	manager.init(GameState::Game);
+	manager.init(GameState::Title);
 
 	while (System::Update())
 	{
