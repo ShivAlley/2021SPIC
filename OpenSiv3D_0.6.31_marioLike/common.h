@@ -8,6 +8,7 @@ enum class GameState
 	Menu,
 	Game,
 	Gameover,
+	GameClear,
 };
 
 struct ShareGameData
@@ -15,6 +16,7 @@ struct ShareGameData
 	int dummy = 0;
 	int32 Life{3};
 	int32 stageNum = 0;
+	int32 select = 0;
 };
 
 using App = SceneManager<GameState, ShareGameData>;

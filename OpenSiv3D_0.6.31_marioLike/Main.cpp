@@ -6,12 +6,13 @@
 # include "Game.h"
 # include "Menu.h"
 # include "Gameover.h"
+# include "GameClear.h"
 
 void Main()
 {
 	Window::SetToggleFullscreenEnabled(true);
 	Window::SetFullscreen(true,0);
-	Scene::SetResizeMode(ResizeMode::Keep);
+	Scene::SetResizeMode(ResizeMode::Actual);
 	//TextureAsset::Register(U"sampleBack", U"Image/sampleBack.png");
 	//TextureAsset::Register(U"dummy256", U"Image/256x256.png");
 	//TextureAsset::Register(U"dummyPlayer", U"Image/player.png",TextureDesc::Mipped);
@@ -28,7 +29,16 @@ void Main()
 	TextureAsset::Register(U"flyEnemy", U"Image/sky_enemy.png", TextureDesc::Mipped);
 	TextureAsset::Register(U"cannonEnemy", U"Image/shot_enemy.png", TextureDesc::Mipped);
 	TextureAsset::Register(U"stomp", U"Image/stomp_effect.png", TextureDesc::Mipped);
-	TextureAsset::Register(U"back", U"Image/back_ground.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"life", U"Image/life.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"flag", U"Image/flag.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"clear", U"Image/text_clear.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"over", U"Image/text_gameover.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"tuto_walk", U"Image/tutorial_walk.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"tuto_jamp", U"Image/tutorial_jamp.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"tuto_minijamp", U"Image/tutorial_mini_jamp.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"tuto_space", U"Image/tutorial_space.png", TextureDesc::Mipped);
+
+
 	AudioAsset::Register(U"bound", U"Music/bound.mp3");
 	AudioAsset::Register(U"coin", U"Music/coin.mp3");
 	AudioAsset::Register(U"decide", U"Music/decide.mp3");
@@ -44,6 +54,7 @@ void Main()
 	manager.add<Game>(GameState::Game);
 	manager.add<Menu>(GameState::Menu);
 	manager.add<Gameover>(GameState::Gameover);
+	manager.add<GameClear>(GameState::GameClear);
 
 	// ゲームシーンから開始
 	manager.init(GameState::Title);

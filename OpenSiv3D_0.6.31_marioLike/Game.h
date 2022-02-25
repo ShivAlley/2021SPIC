@@ -132,7 +132,7 @@ private:
 	Vec2 m_previousVelocity{};
 	int32 m_health{5};
 	//int32 m_life{3};
-	int32 m_coinCount;
+	int32 m_coinCount{0};
 	bool m_shouldRecordVelocity = true;
 	bool m_isJumpRestriction = false;
 	bool m_isOnGround = false;
@@ -258,8 +258,16 @@ private:
 	Array<FlyingEnemy> flyingEnemys;
 	Array<CannonEnemy> cannonEnemys;
 	Array<BulletEnemy> bulletEnemys;
-	
 
+	P2Body goal;
+
+	[[nodiscard]]
+	P2Body InitializeGoal(Vec2 v, double radius = 32.0)
+	{
+		return world.createCircleSensor(P2Kinematic, v - Vec2{ radius,radius }, radius);
+	}
+
+	//int32 goalPos=13200;
 
 	Camera2D camera{ Vec2{ 0, 0 } };
 

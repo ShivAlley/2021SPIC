@@ -162,6 +162,9 @@
     <ClCompile Include="Gameover.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GameClear.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
@@ -813,6 +816,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Gameover.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameClear.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,16 +3,22 @@
 
 Title::Title(const InitData& init):IScene(init)
 {
+	AudioAsset(U"title").setVolume(0.7);
+	AudioAsset(U"title").play();
 }
 
 void Title::update()
 {
 	getData().Life = 3;
 	if (KeyEnter.up())selectFlag = true;
-	if (getData().stageNum < 2 && KeyS.up()|| KeyDown.up())getData().stageNum++;
-	if (getData().stageNum > 0 && KeyW.up()|| KeyUp.up())getData().stageNum--;
+	getData().stageNum = Clamp(getData().stageNum, 0, 2);
+	if (KeyS.up()|| KeyDown.up())getData().stageNum++;
+	if (KeyW.up()|| KeyUp.up())getData().stageNum--;
 	if (KeyEnter.up())selectFlag = true;
-	if (KeyEnter.pressed() && selectFlag)changeScene(GameState::Game);
+	if (KeyEnter.pressed() && selectFlag) {
+		AudioAsset(U"title").stop();
+		changeScene(GameState::Game);
+	}
 }
 
 void Title::draw() const
@@ -45,9 +51,6 @@ void Title::draw() const
 		FontAsset(U"Title")(U"Stage 3")
 			.drawAt(Scene::Center().x, 900, Palette::Orange);
 
-
-
-		
 
 		switch (getData().stageNum)
 		{

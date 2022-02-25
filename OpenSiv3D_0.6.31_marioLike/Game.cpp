@@ -5,23 +5,32 @@
 
 Game::Game(const InitData& init) : IScene(init)
 {
-	switch (getData().dummy)//TODO:DUMMY
+	switch (Vec2 playerInitPos; getData().stageNum)//TODO:DUMMY
 	{
 		{
 	case 0:
 		terrCSV.load(U"Stage/Stage1._地形.csv");
 		coinCSV.load(U"Stage/Stage1._コイン.csv");
 		enemyCSV.load(U"Stage/Stage1._敵.csv");
+		playerInitPos = { 100,1700 };
+		player.body() = world.createRect(P2Dynamic, playerInitPos, RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
+		goal = InitializeGoal(Vec2(13200,650));
 		break;
 	case 1:
 		terrCSV.load(U"Stage/Stage2_地形.csv");
 		coinCSV.load(U"Stage/Stage2_コイン.csv");
 		enemyCSV.load(U"Stage/Stage2_敵.csv");
+		playerInitPos = { 100,1700 };
+		player.body() = world.createRect(P2Dynamic, playerInitPos, RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
+		goal = InitializeGoal(Vec2(12000, 1600));//これは適当
 		break;
 	case 2:
-		terrCSV.load(U"Stage/Stage3._地形.csv");
-		coinCSV.load(U"Stage/Stage3._コイン.csv");
-		enemyCSV.load(U"Stage/Stage3._敵.csv");
+		terrCSV.load(U"Stage/Stage3_地面.csv");
+		coinCSV.load(U"Stage/Stage3_コイン.csv");
+		enemyCSV.load(U"Stage/Stage3_敵.csv");
+		playerInitPos = { 200,1700 };
+		player.body() = world.createRect(P2Dynamic, playerInitPos, RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
+		goal = InitializeGoal(Vec2(12000, 1600));//これは適当
 		break;
 		}
 	default:
@@ -32,7 +41,7 @@ Game::Game(const InitData& init) : IScene(init)
 	//std::visit(visitor, visitor.inspector.at(visitor.stateMachine.front()));
 	//TopLeftをずらして指定して描画の時に地に足がつくようにする
 	//player.body() = world.createRect(P2Dynamic, Vec2(500, -100), RectF(Arg::topLeft(0,32),BODY_SIZE, BODY_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
-	player.body() = world.createRect(P2Dynamic, Vec2(1000, 300), RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
+	//player.body() = world.createRect(P2Dynamic, Vec2(1000, 300), RectF(CHIP_SIZE, CHIP_SIZE * 2), P2Material(1.0, 1.0, 0.2, 0.0));
 	player.body().setDamping(0.1);
 	player.body().setFixedRotation(true);
 TERRAIN_:
@@ -419,6 +428,7 @@ void Game::update()
 	}
 	if (getData().Life <= 0)
 	{
+		AudioAsset(U"game").stop();
 		changeScene(GameState::Gameover);
 	}
 
@@ -432,6 +442,38 @@ void Game::update()
 	{
 		ControlPlayer();
 	}
+
+	/*if (player.GetBody().getPos().x > goalPos)
+	{
+		changeScene(GameState::GameClear);
+	}*/
+
+	for (auto&& it : world.getCollisions())
+	{
+		if (it.first.a == player.GetBody().id()
+			and it.first.b == goal.id())
+		{
+			AudioAsset(U"game").stop();
+			changeScene(GameState::GameClear);//シーン遷移
+		}
+	}
+
+#if _DEBUG
+
+
+	if (KeyRight.pressed())
+		player.body().moveBy(100, 0);
+	if (KeyLeft.pressed())
+		player.body().moveBy(-100, 0);
+	if (KeyDown.pressed())
+		player.body().moveBy(0, 100);
+	if (KeyUp.pressed())
+		player.body().moveBy(0, -100);
+	ClearPrint();
+	Print << player.GetBody().getPos();
+
+#endif // _DEBUG
+
 
 	Vec2 plv = player.GetBody().getPos();
 	plv.x = Clamp(plv.x, 0.0, static_cast<double>(terrainSize.x * CHIP_SIZE));
@@ -756,6 +798,27 @@ void Game::draw() const
 		int id = chip.id();
 		PutText(String(ToString(id)), chip.getPos() + Vec2(CHIP_SIZE / 2, CHIP_SIZE / 2));
 	}
+	//TextureAsset(U"flag")(0, 0, 256, 256).draw(goal);
+	TextureAsset(U"flag")(0, 0, 256, 256)
+		.scaled(0.5, 0.5)
+		.drawAt(goal.getPos());
+
+	if (getData().stageNum == 0) {
+		TextureAsset(U"tuto_walk")(0, 0, 512, 256)
+			.scaled(0.8, 0.8)
+			.drawAt(200, 1600);
+
+		TextureAsset(U"tuto_space")(0, 0, 512, 256)
+			.scaled(0.8, 0.8)
+			.drawAt(800, 1300);
+
+		TextureAsset(U"tuto_jamp")(0, 0, 512, 256)
+			.scaled(0.8, 0.8)
+			.drawAt(2650, 1300);
+
+		TextureAsset(U"tuto_minijamp")(0, 0, 512, 256)
+			.drawAt(5000, 1400);
+	}
 	transf.~Transformer2D();
 	TextureAsset(U"icon")(0, 0, 200, 100)
 		.scaled(0.5, 0.5)
@@ -767,9 +830,9 @@ void Game::draw() const
 		.draw(70, 100);
 	FontAsset(U"Title")(U"×", player.GetCoinCount()).draw(150, 100);
 
-	TextureAsset(U"icon")(0, 0, 200, 100)
+	TextureAsset(U"life")(0, 0, 200, 100)
 		.scaled(0.5, 0.5)
-		.draw(50, 150);
+		.draw(70, 150);
 	FontAsset(U"Title")(U"×", player.GetHealth()).draw(150, 150);
 
 }
