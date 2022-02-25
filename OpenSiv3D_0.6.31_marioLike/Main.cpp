@@ -18,6 +18,9 @@ void Main()
 	//TextureAsset::Register(U"dummychip", U"Image/sample.png");
 	FontAsset::Register(U"Title", 60, FileSystem::GetFolderPath(SpecialFolder::SystemFonts) + U"UDDigiKyokashoN-B.ttc");
 	TextureAsset::Register(U"player", U"Image/costomPlayer.png",TextureDesc::Mipped);
+	TextureAsset::Register(U"titleLogo", U"Image/title.png",TextureDesc::Mipped);
+	TextureAsset::Register(U"back", U"Image/back_ground.png",TextureDesc::Mipped);
+	TextureAsset::Register(U"select", U"Image/select.png",TextureDesc::Mipped);
 	TextureAsset::Register(U"terrain", U"Image/map.png", TextureDesc::Mipped);
 	TextureAsset::Register(U"coin", U"Image/jewel.png", TextureDesc::Mipped);
 	TextureAsset::Register(U"bullet", U"Image/bullet.png", TextureDesc::Mipped);
@@ -35,6 +38,7 @@ void Main()
 	AudioAsset::Register(U"title", U"Music/title_bgm.mp3", Loop::Yes);
 	AudioAsset::Register(U"gameClear", U"Music/game_clear.mp3", Loop::Yes);
 	AudioAsset::Register(U"game", U"Music/game_bgm.mp3", Loop::Yes);
+	TextureAsset::Register(U"icon", U"Image/icon.png", TextureDesc::Mipped);
 	App manager;
 	manager.add<Title>(GameState::Title);
 	manager.add<Game>(GameState::Game);

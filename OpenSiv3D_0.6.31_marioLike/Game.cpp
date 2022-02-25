@@ -1,4 +1,5 @@
 ﻿#include "stdafx.h"
+#include "Title.h"
 #include "Game.h"
 #include "LoadCSV.h"
 
@@ -453,7 +454,6 @@ void Game::draw() const
 
 	
 	//TextureAsset(U"sampleBack").scaled(1.5,1.5).draw();
-	PutText(U"UI", v);
 	const auto transf = camera.createTransformer();
 	
 	{
@@ -756,6 +756,22 @@ void Game::draw() const
 		int id = chip.id();
 		PutText(String(ToString(id)), chip.getPos() + Vec2(CHIP_SIZE / 2, CHIP_SIZE / 2));
 	}
+	transf.~Transformer2D();
+	TextureAsset(U"icon")(0, 0, 200, 100)
+		.scaled(0.5, 0.5)
+		.draw(50, 50);
+	FontAsset(U"Title")(U"×", getData().Life).draw(150, 50);
+
+	TextureAsset(U"coin")(0, 0, 128, 128)
+		.scaled(0.5, 0.5)
+		.draw(70, 100);
+	FontAsset(U"Title")(U"×", player.GetCoinCount()).draw(150, 100);
+
+	TextureAsset(U"icon")(0, 0, 200, 100)
+		.scaled(0.5, 0.5)
+		.draw(50, 150);
+	FontAsset(U"Title")(U"×", player.GetHealth()).draw(150, 150);
+
 }
 
 void Game::PrintDebug()
