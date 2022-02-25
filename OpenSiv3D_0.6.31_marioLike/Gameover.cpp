@@ -9,7 +9,10 @@ Gameover::Gameover(const InitData& init)
 
 void Gameover::update()
 {
-
+	if (Scene::Time() > 30)
+	{
+		changeScene(GameState::Title);
+	}
 }
 
 void Gameover::draw() const

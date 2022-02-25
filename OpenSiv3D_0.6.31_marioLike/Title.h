@@ -10,14 +10,12 @@ public:
 	void update() override;
 
 	void draw() const override;
-
 private:
 	Vec2 start{ -1024,-512 };
 	Vec2 goal{ 478,100 };
 	Stopwatch stopwatch{ StartImmediately::Yes };
 	bool selectFlag=false;
 	Vec2 selectPos;
-	int stageNum = 0;
 };
 
 

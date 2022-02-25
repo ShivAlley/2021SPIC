@@ -1,15 +1,45 @@
 ﻿#include "stdafx.h"
+#include "Title.h"
 #include "Game.h"
 #include "LoadCSV.h"
 
 Game::Game(const InitData& init) : IScene(init)
 {
-	const CSV terrData(U"example/csv/sample.csv");
-	//const CSV terrData(U"Stage/Stage1_地形.csv");
-	const CSV coinData(U"Stage/Stage1_コイン.csv");
-	const CSV enemyData(U"Stage/Stage1_敵.csv");
-	const CSV backData(U"Stage/Stage1_背景.csv");
-	const CSV arrowData(U"Stage/Stage1_矢印.csv");
+
+	/*switch (getData().stageNum)
+	{
+	case 0:
+	{*/
+		const CSV terrData(U"example/csv/sample.csv");
+		//const CSV terrData(U"Stage/Stage1_地形.csv");
+		const CSV coinData(U"Stage/Stage1_コイン.csv");
+		const CSV enemyData(U"Stage/Stage1_敵.csv");
+		const CSV backData(U"Stage/Stage1_背景.csv");
+		const CSV arrowData(U"Stage/Stage1_矢印.csv");
+	//	break;
+	//}
+	//case 1:
+	//{
+	//	const CSV terrData(U"example/csv/sample.csv");
+	//	//const CSV terrData(U"Stage/Stage2_地形.csv");
+	//	const CSV coinData(U"Stage/Stage2_コイン.csv");
+	//	const CSV enemyData(U"Stage/Stage2_敵.csv");
+	//	const CSV backData(U"Stage/Stage2_背景.csv");
+	//	const CSV arrowData(U"Stage/Stage2_矢印.csv");
+	//	break;
+	//}
+	//case 2:
+	//{
+	//	const CSV terrData(U"example/csv/sample.csv");
+	//	//const CSV terrData(U"Stage/Stage1_地形.csv");
+	//	const CSV coinData(U"Stage/Stage3_コイン.csv");
+	//	const CSV enemyData(U"Stage/Stage3_敵.csv");
+	//	const CSV backData(U"Stage/Stage3_背景.csv");
+	//	const CSV arrowData(U"Stage/Stage3_矢印.csv");
+	//	break;
+	//}
+	//}
+	
 	//visitor.inspector[Accessor::first] = [&]() {return foo(); };
 	//std::visit(visitor, visitor.inspector.at(visitor.stateMachine.front()));
 	//TopLeftをずらして指定して描画の時に地に足がつくようにする
@@ -378,8 +408,10 @@ void Game::update()
 
 void Game::draw() const
 {
+	
 	//TextureAsset(U"sampleBack").scaled(1.5,1.5).draw();
 	const auto transf = camera.createTransformer();
+	
 	player.GetBody().draw();
 	for (auto p : step(terrainSize)) {
 		//chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
@@ -543,11 +575,28 @@ void Game::draw() const
 		int id = chip.id();
 		PutText(String(ToString(id)), chip.getPos() + Vec2(CHIP_SIZE / 2, CHIP_SIZE / 2));
 	}
+	transf.~Transformer2D();
+	TextureAsset(U"icon")(0, 0, 200, 100)
+		.scaled(0.5, 0.5)
+		.draw(50, 50);
+	FontAsset(U"Title")(U"×", getData().Life).draw(150, 50);
+
+	TextureAsset(U"coin")(0, 0, 128, 128)
+		.scaled(0.5, 0.5)
+		.draw(70, 100);
+	FontAsset(U"Title")(U"×", player.GetCoinCount()).draw(150, 100);
+
+	TextureAsset(U"icon")(0, 0, 200, 100)
+		.scaled(0.5, 0.5)
+		.draw(50, 150);
+	FontAsset(U"Title")(U"×", player.GetHealth()).draw(150, 150);
+
 }
 
 void Game::PrintDebug()
 {
 	ClearPrint();
+	Print << (U"Game0");
 	for (auto& it : world.getCollisions())
 	{
 		Print << it.first.a;

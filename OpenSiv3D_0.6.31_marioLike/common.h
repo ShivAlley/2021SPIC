@@ -14,6 +14,7 @@ struct ShareGameData
 {
 	int dummy;
 	int32 Life{3};
+	int32 stageNum = 0;
 };
 
 using App = SceneManager<GameState, ShareGameData>;

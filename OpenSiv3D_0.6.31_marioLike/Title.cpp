@@ -7,11 +7,12 @@ Title::Title(const InitData& init):IScene(init)
 
 void Title::update()
 {
+	getData().Life = 3;
 	if (KeyEnter.up())selectFlag = true;
-	if (stageNum < 2 && KeyS.up()|| KeyDown.up())stageNum++;
-	if (stageNum > 0 && KeyW.up()|| KeyUp.up())stageNum--;
+	if (getData().stageNum < 2 && KeyS.up()|| KeyDown.up())getData().stageNum++;
+	if (getData().stageNum > 0 && KeyW.up()|| KeyUp.up())getData().stageNum--;
 	if (KeyEnter.up())selectFlag = true;
-	if (KeyEnter.pressed()&&selectFlag)changeScene(GameState::Game);
+	if (KeyEnter.pressed() && selectFlag)changeScene(GameState::Game);
 }
 
 void Title::draw() const
@@ -48,7 +49,7 @@ void Title::draw() const
 
 		
 
-		switch (stageNum)
+		switch (getData().stageNum)
 		{
 		case 0:
 		{
