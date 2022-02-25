@@ -139,7 +139,7 @@ private:
 	bool m_isInvincible = false;
 	bool m_isAttachWall = false;
 	static constexpr Vec2 MAX_VEL = { 1000,1000 };
-	static constexpr Vec2 ACCELERATION = { 30000,-200 };
+	static constexpr Vec2 ACCELERATION = { 40000,-200 };
 	static constexpr double FLOOR_KICK_POWER = 500;
 	static constexpr Vec2 WALL_KICK_POWER = { 500,-500 };
 	static constexpr Vec2 KNOCKBACKED_POWER = { -300,-300 };

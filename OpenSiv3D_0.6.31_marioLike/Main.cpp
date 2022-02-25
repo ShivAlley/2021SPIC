@@ -10,8 +10,9 @@
 
 void Main()
 {
-	Window::SetToggleFullscreenEnabled(true);
-	Window::SetFullscreen(true,0);
+	//Window::SetToggleFullscreenEnabled(true);
+	Window::SetFullscreen(true);
+	Window::SetTitle(U"HOPPER");
 	Scene::SetResizeMode(ResizeMode::Actual);
 	//TextureAsset::Register(U"sampleBack", U"Image/sampleBack.png");
 	//TextureAsset::Register(U"dummy256", U"Image/256x256.png");
@@ -37,6 +38,7 @@ void Main()
 	TextureAsset::Register(U"tuto_jamp", U"Image/tutorial_jamp.png", TextureDesc::Mipped);
 	TextureAsset::Register(U"tuto_minijamp", U"Image/tutorial_mini_jamp.png", TextureDesc::Mipped);
 	TextureAsset::Register(U"tuto_space", U"Image/tutorial_space.png", TextureDesc::Mipped);
+	TextureAsset::Register(U"tutorial_wall_jamp", U"Image/tutorial_wall_jamp.png", TextureDesc::Mipped);
 
 
 	AudioAsset::Register(U"bound", U"Music/bound.mp3");

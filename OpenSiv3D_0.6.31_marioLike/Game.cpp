@@ -504,7 +504,7 @@ void Game::draw() const
 		TextureAsset(U"back").mapped(Size{ terrainSize.x * CHIP_SIZE,terrainSize.y * CHIP_SIZE }).draw();
 	}
 	//PutText(U"UI", v);
-	player.GetBody().draw();
+	//player.GetBody().draw();
 	for (auto p : step(terrainSize)) {
 		//chips << world.createRect(P2Static, Vec2{ p.x * CHIP_SIZE ,p.y * CHIP_SIZE  }, RectF(CHIP_SIZE), P2Material());
 		if (terrGrid[p.y][p.x] == 1)
@@ -634,13 +634,13 @@ void Game::draw() const
 	{
 		if (coin.operator bool())
 		{
-			coin.draw(HSV{ coin.id() * 10.0 });
+			//coin.draw(HSV{ coin.id() * 10.0 });
 			TextureAsset(U"coin").scaled(0.5, 0.5).drawAt(Vec2(coin.getPos()));
 		}
 	}
 	for (const auto& enemy : walkingEnemys)
 	{
-		enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
+		//enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
 		uint64 t = enemy.anime.animeTimer.ms64();
 		switch (int32 n; enemy.anime.animeState)
 		{
@@ -699,7 +699,7 @@ void Game::draw() const
 	}
 	for (const auto& enemy : flyingEnemys)
 	{
-		enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
+		//enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
 		uint64 t = enemy.anime.animeTimer.ms64();
 		switch (int32 n; enemy.anime.animeState)
 		{
@@ -755,7 +755,7 @@ void Game::draw() const
 	{
 		if (enemy.GetIsLookAtRight())
 		{
-			enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
+			//enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
 			TextureAsset(U"cannonEnemy")
 				(0,
 				0,
@@ -766,7 +766,7 @@ void Game::draw() const
 		}
 		else
 		{
-			enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
+			//enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
 			TextureAsset(U"cannonEnemy")
 				(0,
 				0,
@@ -778,7 +778,7 @@ void Game::draw() const
 
 	for (const auto& enemy : bulletEnemys)
 	{
-		enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
+		//enemy.GetBody().draw(HSV{ enemy.GetBody().id() * 10.0 });
 		if (enemy.GetBody().operator bool())
 		{
 			if (enemy.GetVelocity().x > 0)
@@ -796,7 +796,7 @@ void Game::draw() const
 	{
 		//chip.draw(HSV{ chip.id() * 10.0 });
 		int id = chip.id();
-		PutText(String(ToString(id)), chip.getPos() + Vec2(CHIP_SIZE / 2, CHIP_SIZE / 2));
+		//PutText(String(ToString(id)), chip.getPos() + Vec2(CHIP_SIZE / 2, CHIP_SIZE / 2));
 	}
 	//TextureAsset(U"flag")(0, 0, 256, 256).draw(goal);
 	TextureAsset(U"flag")(0, 0, 256, 256)
@@ -813,6 +813,9 @@ void Game::draw() const
 			.drawAt(800, 1300);
 
 		TextureAsset(U"tuto_jamp")(0, 0, 512, 256)
+			.scaled(0.8, 0.8)
+			.drawAt(2650, 1000);
+		TextureAsset(U"tutorial_wall_jamp")
 			.scaled(0.8, 0.8)
 			.drawAt(2650, 1300);
 
@@ -886,7 +889,7 @@ void Game::animeUpdate()
 
 void Game::ControlPlayer()
 {
-	if (player.landingDelay().ms() > 500)
+	if (player.landingDelay().ms() > 200)
 	{
 		if (isInputLeftDirection()
 			and player.GetPreviousVelocity().x > 0)
@@ -947,7 +950,7 @@ void Game::ControlPlayer()
 			player.landingDelay().reset();
 			player.body().setVelocity(player.GetPreviousVelocity());
 			player.body().setGravityScale(1);
-			player.body().applyLinearImpulse(Vec2(-player.GetParam().floorKickPower, player.GetParam().jumpPower / 4));
+			player.body().applyLinearImpulse(Vec2(-player.GetParam().floorKickPower, player.GetParam().jumpPower));
 			player.SetIsJumpRestriction(true);
 			player.SetIsOnGround(false);
 			player.SetShouldRecordVelocity(true);
@@ -959,7 +962,7 @@ void Game::ControlPlayer()
 			player.landingDelay().reset();
 			player.body().setVelocity(player.GetPreviousVelocity());
 			player.body().setGravityScale(1);
-			player.body().applyLinearImpulse(Vec2(player.GetParam().floorKickPower, player.GetParam().jumpPower / 4));
+			player.body().applyLinearImpulse(Vec2(player.GetParam().floorKickPower, player.GetParam().jumpPower));
 			player.SetIsJumpRestriction(true);
 			player.SetIsOnGround(false);
 			player.SetShouldRecordVelocity(true);
@@ -1096,7 +1099,7 @@ void Game::ControlEnemys()
 	{
 		double diff = AbsDiff(player.GetBody().getPos().x, enemy.GetBody().getPos().x);
 
-		if (enemy.GetShotInterval().ms() > 5000
+		if (enemy.GetShotInterval().ms() > 10000
 			and diff < Scene::Width())
 		{
 			if (enemy.GetIsLookAtRight())
