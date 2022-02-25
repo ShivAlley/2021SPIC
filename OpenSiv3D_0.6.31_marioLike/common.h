@@ -12,7 +12,7 @@ enum class GameState
 
 struct ShareGameData
 {
-	int dummy;
+	int dummy = 0;
 	int32 Life{3};
 };
 

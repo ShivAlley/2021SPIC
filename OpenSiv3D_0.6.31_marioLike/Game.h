@@ -7,7 +7,11 @@ concept vec2D = requires (T & x) {
 	x.y;
 };
 
-
+struct KilledEnemy
+{
+	Vec2 deadPos;
+	Stopwatch destroyTimer{ StartImmediately::No };
+};
 
 
 struct AnimePlayer
@@ -37,6 +41,24 @@ struct AnimePlayer
 	int32 damaged[2]{ 0,1 };
 	Stopwatch animeTimer{ StartImmediately::Yes };
 	
+};
+
+struct AnimeWalkingEnemy
+{
+	int32 animeState = 0;
+	int32 walk[8]{ 0,1,2,3,4,5,6,7 };
+	int32 dead[1]{ 0 };
+	int32 stomp[7]{ 0,1,2,3,4,5,6 };
+	Stopwatch animeTimer{ StartImmediately::Yes };
+};
+
+struct AnimeFlyingEnemy
+{
+	int32 animeState = 0;
+	int32 fly[8]{ 0,1,2,3,4,5,6,7 };
+	int32 dead[5]{ 0,1,2,3,4 };
+	int32 stomp[7]{ 0,1,2,3,4,5,6 };
+	Stopwatch animeTimer{ StartImmediately::Yes };
 };
 
 
@@ -149,7 +171,10 @@ public:
 	{}
 	const bool& GetIsLookAtRight()const { return m_isLookAtRight; }
 	void ToggleIsLookAtRight() { m_isLookAtRight = not m_isLookAtRight; }
+	void SetIsLookAtRight(bool b) { m_isLookAtRight = b; }
 	Stopwatch& turnCooldown() { return m_turnCooldown; }
+	KilledEnemy corpse;
+	AnimeWalkingEnemy anime;
 private:
 
 	bool m_isLookAtRight = true;
@@ -166,7 +191,8 @@ public:
 	void ToggleIsLookAtDown() { m_isLookAtDown = not m_isLookAtDown; }
 	const Stopwatch& GetTurnWatch()const { return m_turnWatch; }
 	Stopwatch& turnWatch() { return m_turnWatch; }
-	
+	KilledEnemy corpse;
+	AnimeFlyingEnemy anime;
 private:
 	bool m_isLookAtDown = true;
 	Stopwatch m_turnWatch{ StartImmediately::Yes };
@@ -197,15 +223,12 @@ public:
 	{}
 	const Vec2& GetVelocity()const { return m_velocity; }
 	void SetVelocity(Vec2 v) { m_velocity = v; }
+	Vec2 deadPos;
 private:
 	Vec2 m_velocity;
 };
 
-struct KilledEnemy
-{
-	//Stopwatch destroyTimer;
-	Vec2 deadPos;
-};
+
 
 class Game : public App::Scene
 	//private Player
@@ -218,77 +241,31 @@ public:
 	void draw() const override;
 
 private:
-#ifdef _DEBUG
 	void PrintDebug();
-#endif // _DEBUG
 	Visitor<void(void)> visitor;
 	P2World world{ GRAVITY };
-	Array<P2Body> chips;
+	CSV terrCSV;
+	CSV coinCSV;
+	CSV enemyCSV;
+	Grid<int8> terrGrid;
+	Grid<int8> coinGrid;
+	Grid<int8> enemygrid;
 	Size terrainSize{};
+	Vec2 v{ 100, 150 };
+	Array<P2Body> terrains;
 	Array<P2Body> coins;
-	//Array<P2Body> walkingEnemys;
 	Array<WalkingEnemy> walkingEnemys;
 	Array<FlyingEnemy> flyingEnemys;
 	Array<CannonEnemy> cannonEnemys;
 	Array<BulletEnemy> bulletEnemys;
-	Grid<int8> enemyDatas =
-	{
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-	};
+	
 
-	Grid<int8> terrain;
 
 	Camera2D camera{ Vec2{ 0, 0 } };
 
 	Player player;
-	void animeUpdate()
-	{
-		int32 changeCheck = player.anime.animeState;
-		if (player.GetIsOnGround()
-			/*and not(isInputDownDirection())*/)
-		{
-			player.anime.animeState = 0;
-		}
-		if (not player.GetIsOnGround())
-		{
-			player.anime.animeState = 1;
-		}
-		if (isInputDownDirection())
-		{
-			player.anime.animeState = 2;
-		}
-		if (player.GetIsAttachWall())
-		{
-			player.anime.animeState = 3;
-			if (player.GetIsOnGround())
-			{
-				player.anime.animeState = 0;
-			}
-		}
-		if (player.GetIsInvincible())
-		{
-			player.anime.animeState = 4;
-		}
-
-		if (changeCheck not_eq player.anime.animeState)
-		{
-			player.anime.animeTimer.restart();
-		}
-	}
+	void animeUpdate();
+	
 
 	void ControlPlayer();
 	void ResponsePlayerLeftHit();
